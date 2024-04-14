@@ -1,0 +1,71 @@
+
+
+###
+POST   http://localhost:8006/api/v1/user/get-user-by-id
+Content-Type: application/json
+
+{
+    "id": "3"
+}
+
+### ADMin account
+POST  http://localhost:8006/api/v1/user/login
+Content-Type: application/json
+
+{
+    "email": "example@example.com",
+    "password": "Passw0rd"
+}
+
+###
+POST  http://localhost:8006/api/v1/user/login
+Content-Type: application/json
+
+{
+    "email": "acc1@gmail.com",
+    "password": "654321"
+}
+
+###
+POST  http://localhost:8006/api/v1/user/register
+Content-Type: application/json
+
+{
+    "email": "baocao1@gmail.com",
+    "password": "654321"
+}
+
+###
+POST  http://localhost:8006/api/v1/user/register
+Content-Type: application/json
+
+{
+  "email": "example@example.com",
+  "password": "Passw0rd",
+  "firstName": "John",
+  "lastName": "Doe",
+  "address": "123 Main St",
+  "genderId": "male",
+  "phonenumber": "1234567890",
+  "image": "https://example.com/image.jpg"
+}
+
+###
+GET  http://localhost:8006/api/v1/user/get-current-user
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJleGFtcGxlQGV4YW1wbGUuY29tIiwicm9sZUlkIjoiUjEiLCJpYXQiOjE3MTI1NjYxMDYsImV4cCI6MTcxMjk5ODEwNn0.usDNoFpMsubrtmxi6vwxNGigihIPeUNRLWmCYWbbVHI
+
+
+###
+POST http://localhost:8006/api/v1/user/delete-user
+Content-Type: application/json
+
+{
+    "id": "6"
+}
+
+###
+GET http://localhost:8006/api/v1/all-code/get-list-allcode
+
+###
+GET http://localhost:8006/api/v1/all-code/get-all-code?type=GENDER
+
