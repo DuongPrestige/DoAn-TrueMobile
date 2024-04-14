@@ -7,6 +7,7 @@ const sequelize = new Sequelize('truemobile', 'root', null, {
   logging: false //bo log thong tin thua
 });
 // tesst commit conflict
+// comment tesst
 
 const connectionDB = async () => {
     try {
