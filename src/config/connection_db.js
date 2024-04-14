@@ -7,7 +7,7 @@ const sequelize = new Sequelize('truemobile', 'root', null, {
   logging: false //bo log thong tin thua
 });
 // comment tesst
-
+//abc
 const connectionDB = async () => {
     try {
         await sequelize.authenticate();

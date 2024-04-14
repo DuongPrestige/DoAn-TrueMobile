@@ -160,30 +160,6 @@ INSERT INTO `roommessages` (`id`, `userOne`, `userTwo`, `createdAt`, `updatedAt`
 (1, 1, 6, '2024-04-12 00:51:50', '2024-04-12 00:51:50'),
 (2, 2, 6, '2024-04-12 01:04:30', '2024-04-12 01:04:30');
 
-INSERT INTO `sequelizemeta` (`name`) VALUES
-('migration-create-addressuser.js'),
-('migration-create-allcode.js'),
-('migration-create-banner.js'),
-('migration-create-blog.js'),
-('migration-create-comment.js'),
-('migration-create-message.js'),
-('migration-create-orderdetail.js'),
-('migration-create-orderproduct.js'),
-('migration-create-product.js'),
-('migration-create-productdetail.js'),
-('migration-create-productdetailconfig.js'),
-('migration-create-productimage.js'),
-('migration-create-receipt.js'),
-('migration-create-receiptDetail.js'),
-('migration-create-roommessage.js'),
-('migration-create-shopcart.js'),
-('migration-create-supplier.js'),
-('migration-create-typeship.js'),
-('migration-create-typevoucher.js'),
-('migration-create-user.js'),
-('migration-create-voucher.js'),
-('migration-create-voucherused.js');
-
 INSERT INTO `shopcarts` (`id`, `userId`, `productdetailconfigId`, `quantity`, `statusId`, `createdAt`, `updatedAt`) VALUES
 (6, 4, 1, 3, '0', '2024-04-13 00:48:28', '2024-04-13 00:48:28');
 
