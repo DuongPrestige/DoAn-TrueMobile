@@ -24,7 +24,7 @@ router.post("/change-password", controllers.handleChangePassword);
 
 router.use(isAdmin);
 router.delete("/delete-user", controllers.handleDeleteUser);
-router.get("/get-all-user", controllers.getAllUser);
+router.get("/get-all-user", controllers.getAllUsers);
 
 //other way
 // router.get('/getcurrentuser',[verifyToken, isAdmin], controllers.getCurrentUser)
