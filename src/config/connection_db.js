@@ -6,6 +6,7 @@ const sequelize = new Sequelize('truemobile', 'root', null, {
   dialect: 'mysql',
   logging: false //bo log thong tin thua
 });
+// comment tesst
 
 const connectionDB = async () => {
     try {
