@@ -86,24 +86,47 @@ export const getCurrentUser = async (req, res) => {
   }
 };
 
+// export const getAllUsers = async (req, res) => {
+//   try {
+//     const response = await services.getAllUsers();
+//     return res.status(200).json(response);
+//   } catch (error) {
+//     return internalServer(res);
+//   }
+// };
+
 export const getAllUsers = async (req, res) => {
   try {
-    const response = await services.getAllUsers();
-    return res.status(200).json(response);
+    let data = await services.getAllUsers(req.query);
+    return res.status(200).json(data);
   } catch (error) {
+    console.log(error);
     return internalServer(res);
   }
 };
 
+// export const getUserById = async (req, res) => {
+//   try {
+//     const userId = req.body.id;
+//     if (userId) {
+//       const response = await services.getDetailUserById(userId);
+//       return res.status(200).json(response);
+//     }
+//   } catch (error) {
+//     return internalServer(res);
+//   }
+// };
+
 export const getUserById = async (req, res) => {
   try {
-    const userId = req.body.id;
-    if (userId) {
-      const response = await services.getUserById(userId);
-      return res.status(200).json(response);
-    }
+    let data = await services.getDetailUserById(req.query.id);
+    return res.status(200).json(data);
   } catch (error) {
-    return internalServer(res);
+    console.log(error);
+    return res.status(200).json({
+      errCode: -1,
+      errMessage: "Error from server",
+    });
   }
 };
 
