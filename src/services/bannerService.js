@@ -39,6 +39,8 @@ export const getDetailBanner = (id) => {
         let res = await db.Banner.findOne({
           where: { id: id },
         });
+
+        //loi anh buffer PayloadTooLargeError: request entity too large
         if (res && res.image) {
           res.image = new Buffer.from(res.image, "base64").toString("binary");
           console.log(res.image);
