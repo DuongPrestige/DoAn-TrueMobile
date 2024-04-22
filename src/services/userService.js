@@ -1,6 +1,7 @@
 import db from "../models";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { Op } from "sequelize";
 
 const hashPassword = (password) =>
   bcrypt.hashSync(password, bcrypt.genSaltSync(8));
@@ -81,7 +82,7 @@ export const register = (body) =>
       resolve({
         err: response[1] ? 0 : 1,
         mes: response[1] ? "Register is successful" : "Email is used",
-        access_token: token ? `Bearer ${token}` : token,
+        access_token: token,
       });
     } catch (error) {
       reject(error);
@@ -149,7 +150,7 @@ export const login = (data) =>
           ? "Password is wrong"
           : "Email has not been registered",
         user: user,
-        access_token: token ? `Bearer ${token}` : token,
+        access_token: token,
       });
     } catch (error) {
       reject(error);
