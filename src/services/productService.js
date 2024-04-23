@@ -390,7 +390,7 @@ export const getDetailProductDetailById = (id) => {
 
                 resolve({
                     errCode: 0,
-                    data: productdetail
+                    data: [productdetail]
                 })
             }
 
@@ -442,7 +442,7 @@ export const getDetailProductImageById = (id) => {
                 }
                 resolve({
                     errCode: 0,
-                    data: productdetailImage
+                    data: [productdetailImage]
                 })
             }
 
@@ -684,10 +684,9 @@ export const getDetailProductDetailConfigById = (id) => {
                 let res = await db.ProductDetailConfig.findOne({
                     where: { id: id },
                 })
-
                 resolve({
                     errCode: 0,
-                    data: res
+                    data: [res]
                 })
             }
 
