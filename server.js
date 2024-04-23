@@ -16,10 +16,14 @@ app.use(
 );
 
 //doc du lieu kieu json
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 //doc du lieu mang, object
 app.use(
-  express.urlencoded({ extended: true, parameterLimit: 100000, limit: "500mb" })
+  express.urlencoded({
+    extended: true,
+    parameterLimit: 100000,
+    limit: "100000000",
+  })
 );
 
 initRoute(app);

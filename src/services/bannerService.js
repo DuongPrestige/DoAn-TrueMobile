@@ -42,7 +42,7 @@ export const getDetailBanner = (id) => {
 
         //loi anh buffer PayloadTooLargeError: request entity too large
         if (res && res.image) {
-          res.image = new Buffer.from(res.image, "base64").toString("binary");
+          res.image = new Buffer(res.image, "base64").toString("binary");
           console.log(res.image);
         }
         resolve({
@@ -76,9 +76,7 @@ export const getAllBanner = (data) => {
       if (res.rows && res.rows.length > 0) {
         res.rows.map(
           (item) =>
-            (item.image = new Buffer.from(item.image, "base64").toString(
-              "binary"
-            ))
+            (item.image = new Buffer(item.image, "base64").toString("binary"))
         );
       }
       resolve({
