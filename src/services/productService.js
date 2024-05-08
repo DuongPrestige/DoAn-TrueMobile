@@ -962,7 +962,7 @@ export const getProductNew = (limit) => {
     }
   });
 };
-//them vao - doing
+//them vao - done
 // lất tất cả chi tiết sản phẩm qua id sản phẩm
 export const getAllProductDetailById = (data) => {
   return new Promise(async (resolve, reject) => {
@@ -1020,7 +1020,8 @@ export const getAllProductDetailById = (data) => {
     }
   });
 };
-//them vao
+//them vao doing
+// lấy tất cả ảnh qua productdetailId
 export const getAllProductDetailImageById = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -1043,8 +1044,8 @@ export const getAllProductDetailImageById = (data) => {
         }
         resolve({
           errCode: 0,
-          data: productImage.rows,
           count: productImage.count,
+          data: productImage.rows,
         });
       }
     } catch (error) {
