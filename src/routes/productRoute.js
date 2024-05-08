@@ -90,11 +90,12 @@ router.delete(
   controllers.deleteProductDetailConfig
 );
 
-router.get(
-  "/get-all-product-detail-by-id",
-  controllers.getAllProductDetailById
-);
+// router.get(
+//   "/get-all-product-detail-by-id",
+//   controllers.getAllProductDetailById
+// );
 
-router.get("/get-all-product-detail-by-id", controllers.getDetailProductById);
-
+//  /get-detail-product-by-id
+//sua lai
+// router.get("/get-all-product-detail-by-id", controllers.getDetailProductById);
 module.exports = router;

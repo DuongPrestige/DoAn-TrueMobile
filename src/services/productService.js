@@ -962,11 +962,13 @@ export const getProductNew = (limit) => {
     }
   });
 };
-//them vao - done
+//them vao - doing
+// lất tất cả chi tiết sản phẩm qua id sản phẩm
 export const getAllProductDetailById = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (!data.id || !data.limit || !data.offset) {
+      //đã bỏ điều kiện !data.limit || !data.offset
+      if (!data.id) {
         resolve({
           errCode: 1,
           errMessage: "Missing required parameter!",
@@ -977,6 +979,8 @@ export const getAllProductDetailById = (data) => {
           limit: +data.limit,
           offset: +data.offset,
         });
+        console.log("productdetail:", productdetail);
+
         if (productdetail.rows && productdetail.rows.length > 0) {
           for (let i = 0; i < productdetail.rows.length; i++) {
             productdetail.rows[i].productImageData =
@@ -1007,8 +1011,8 @@ export const getAllProductDetailById = (data) => {
         }
         resolve({
           errCode: 0,
-          data: productdetail.rows,
           count: productdetail.count,
+          data: productdetail.rows,
         });
       }
     } catch (error) {

@@ -223,7 +223,7 @@ export const getProductShopCart = async (req, res) => {
   }
 };
 
-//them moi
+//them moi doing
 export const getAllProductDetailById = async (req, res) => {
   try {
     let data = await services.getAllProductDetailById(req.query);
@@ -234,7 +234,7 @@ export const getAllProductDetailById = async (req, res) => {
   }
 };
 
-//them moi doing
+//them moi done
 export const getDetailProductById = async (req, res) => {
   try {
     let data = await services.getDetailProductById(req.query.id);
