@@ -45,6 +45,7 @@ export const createNewProduct = (data) => {
               romId: data.rom,
               screen: data.screen,
               os: data.os,
+              frontcam: data.frontcam,
               backcam: data.backcam,
               cpu: data.cpu,
               ram: data.ram,
@@ -1079,6 +1080,7 @@ export const getDetailProductById = (id) => {
           raw: true,
           nest: true,
         });
+        // tính view
         let product = await db.Product.findOne({
           where: { id: id },
           raw: false,
@@ -1086,14 +1088,19 @@ export const getDetailProductById = (id) => {
         product.view = product.view + 1;
         await product.save();
 
+        //tìm xem sản phẩm có thêm màu nào khác không - vì khi create product đã có 1 sản phẩm sẵn rồi
         res.productDetail = await db.ProductDetail.findAll({
           where: { productId: res.id },
         });
+        //check consolog đã trả về đủ 2 màu
+        //console.log("Phai co 2 mau xanh va do", res.productDetail);
+        // console.log("dem so mau", res.productDetail.length);
+        // console.log("id product detail", res.productDetail[1].id);
         for (let i = 0; i < res.productDetail.length > 0; i++) {
           res.productDetail[i].productImage = await db.ProductImage.findAll({
             where: { productdetailId: res.productDetail[i].id },
           });
-
+          // console.log("id product detail", res.productDetail[1].productImage);
           res.productDetail[i].productDetailConfig =
             await db.ProductDetailConfig.findAll({
               where: { productdetailId: res.productDetail[i].id },
@@ -1112,12 +1119,18 @@ export const getDetailProductById = (id) => {
               raw: true,
               nest: true,
             });
+          // console.log(
+          //   "productDetailConfig",
+          //   res.productDetail[1].productDetailConfig
+          // );
           for (let j = 0; j < res.productDetail[i].productImage.length; j++) {
             res.productDetail[i].productImage[j].image = new Buffer(
               res.productDetail[i].productImage[j].image,
               "base64"
             ).toString("binary");
           }
+
+          //tính số lượng
           for (
             let k = 0;
             k < res.productDetail[i].productDetailConfig.length;
@@ -1125,19 +1138,23 @@ export const getDetailProductById = (id) => {
           ) {
             let receiptDetail = await db.ReceiptDetail.findAll({
               where: {
-                productDetailConfigId:
+                //check lai ten id nay o cac api khac
+                productdetailconfigId:
                   res.productDetail[i].productDetailConfig[k].id,
               },
             });
+
             let orderDetail = await db.OrderDetail.findAll({
               where: {
                 productId: res.productDetail[i].productDetailConfig[k].id,
               },
             });
+
             let quantity = 0;
             for (let g = 0; g < receiptDetail.length; g++) {
               quantity = quantity + receiptDetail[g].quantity;
             }
+
             for (let h = 0; h < orderDetail.length; h++) {
               let order = await db.OrderProduct.findOne({
                 where: { id: orderDetail[h].orderId },
@@ -1147,7 +1164,11 @@ export const getDetailProductById = (id) => {
               }
             }
 
-            res.productDetail[i].productDetailConfig[k].stock = quantity;
+            // res.productDetail[i].productDetailConfig[k].stock = quantity;
+            // console.log(
+            //   "stock:",
+            //   res.productDetail[i].productDetailConfig[k].stock
+            // );
           }
         }
         resolve({

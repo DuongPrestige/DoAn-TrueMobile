@@ -8,11 +8,15 @@ const router = express.Router();
 //=====================API PRODUCT==========================//
 
 //PUBLIC ROUTES
+// product details table
 router.get("/get-product-detail-by-id", controllers.getDetailProductDetailById);
+// product images table
+
 router.get(
   "/get-product-detail-image-by-id",
   controllers.getDetailProductImageById
 );
+// product detail configs table
 router.get(
   "/get-all-product-detail-config-by-id",
   controllers.getAllProductDetailConfigById
@@ -21,6 +25,8 @@ router.get(
   "/get-detail-product-detail-config-by-id",
   controllers.getDetailProductDetailConfigById
 );
+
+//products table
 router.get("/get-all-product-user", controllers.getAllProductUser);
 router.get("/get-product-feature", controllers.getProductFeature);
 router.get("/get-product-new", controllers.getProductNew);
@@ -35,12 +41,23 @@ router.post("/create-new-product", controllers.createNewProduct);
 router.put("/update-product", controllers.updateProduct);
 
 router.get("/get-all-product-admin", controllers.getAllProductAdmin);
+//bo sung them con thieu 3 cai nay
+router.get("/get-detail-product-by-id", controllers.getDetailProductById);
+router.get(
+  "/get-all-product-detail-by-id",
+  controllers.getAllProductDetailById
+);
+router.get(
+  "/get-all-product-detail-image-by-id",
+  controllers.getAllProductDetailImageById
+);
 
 //active & unactive product
 router.post("/unactive-product", controllers.UnactiveProduct);
 router.post("/active-product", controllers.ActiveProduct);
 
 // product detail table
+
 router.post("/create-new-product-detail", controllers.createNewProductDetail);
 router.put("/update-product-detail", controllers.updateProductDetail);
 router.delete("/delete-product-detail", controllers.deleteProductDetail);
@@ -72,5 +89,12 @@ router.delete(
   "/delete-product-detail-config",
   controllers.deleteProductDetailConfig
 );
+
+router.get(
+  "/get-all-product-detail-by-id",
+  controllers.getAllProductDetailById
+);
+
+router.get("/get-all-product-detail-by-id", controllers.getDetailProductById);
 
 module.exports = router;

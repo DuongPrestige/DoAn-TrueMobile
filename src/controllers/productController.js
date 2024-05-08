@@ -234,7 +234,7 @@ export const getAllProductDetailById = async (req, res) => {
   }
 };
 
-//them moi
+//them moi doing
 export const getDetailProductById = async (req, res) => {
   try {
     let data = await services.getDetailProductById(req.query.id);
