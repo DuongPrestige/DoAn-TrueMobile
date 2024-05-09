@@ -655,6 +655,11 @@ export const getAllProductDetailConfigById = (data) => {
               as: "romData",
               attributes: ["value", "code"],
             },
+            {
+              model: db.Allcode,
+              as: "colorData",
+              attributes: ["value", "code"],
+            },
           ],
           raw: true,
           nest: true,
@@ -741,7 +746,7 @@ export const getDetailProductDetailConfigById = (id) => {
         });
         resolve({
           errCode: 0,
-          data: [res],
+          data: res,
         });
       }
     } catch (error) {
