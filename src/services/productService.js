@@ -645,14 +645,14 @@ export const getAllProductDetailConfigById = (data) => {
           errMessage: "Missing required parameter!",
         });
       } else {
-        let productsize = await db.productDetailConfig.findAndCountAll({
+        let productsize = await db.ProductDetailConfig.findAndCountAll({
           where: { productdetailId: data.id },
           limit: +data.limit,
           offset: +data.offset,
           include: [
             {
               model: db.Allcode,
-              as: "sizeData",
+              as: "romData",
               attributes: ["value", "code"],
             },
           ],
