@@ -450,7 +450,7 @@ export const getDetailProductDetailById = (id) => {
 
         resolve({
           errCode: 0,
-          data: [productdetail],
+          data: productdetail,
         });
       }
     } catch (error) {
@@ -504,7 +504,7 @@ export const getDetailProductImageById = (id) => {
         }
         resolve({
           errCode: 0,
-          data: [productdetailImage],
+          data: productdetailImage,
         });
       }
     } catch (error) {
