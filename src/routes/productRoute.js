@@ -52,6 +52,7 @@ router.get(
   controllers.getAllProductDetailImageById
 );
 
+//
 //active & unactive product
 router.post("/unactive-product", controllers.UnactiveProduct);
 router.post("/active-product", controllers.ActiveProduct);
