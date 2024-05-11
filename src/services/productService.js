@@ -1101,6 +1101,8 @@ export const getDetailProductById = (id) => {
         //tìm xem sản phẩm có thêm màu nào khác không - vì khi create product đã có 1 sản phẩm sẵn rồi
         res.productDetail = await db.ProductDetail.findAll({
           where: { productId: res.id },
+          raw: true,
+          nest: true,
         });
         //check consolog đã trả về đủ 2 màu
         //console.log("Phai co 2 mau xanh va do", res.productDetail);
@@ -1109,11 +1111,15 @@ export const getDetailProductById = (id) => {
         for (let i = 0; i < res.productDetail.length > 0; i++) {
           res.productDetail[i].productImage = await db.ProductImage.findAll({
             where: { productdetailId: res.productDetail[i].id },
+            raw: true,
+            nest: true,
           });
           // console.log("id product detail", res.productDetail[1].productImage);
           res.productDetail[i].productDetailConfig =
             await db.ProductDetailConfig.findAll({
               where: { productdetailId: res.productDetail[i].id },
+              raw: true,
+              nest: true,
               include: [
                 {
                   model: db.Allcode,
@@ -1126,8 +1132,6 @@ export const getDetailProductById = (id) => {
                   attributes: ["value", "code"],
                 },
               ],
-              raw: true,
-              nest: true,
             });
           // console.log(
           //   "productDetailConfig",
@@ -1152,12 +1156,16 @@ export const getDetailProductById = (id) => {
                 productdetailconfigId:
                   res.productDetail[i].productDetailConfig[k].id,
               },
+              raw: true,
+              nest: true,
             });
 
             let orderDetail = await db.OrderDetail.findAll({
               where: {
                 productId: res.productDetail[i].productDetailConfig[k].id,
               },
+              raw: true,
+              nest: true,
             });
 
             let quantity = 0;
@@ -1168,13 +1176,15 @@ export const getDetailProductById = (id) => {
             for (let h = 0; h < orderDetail.length; h++) {
               let order = await db.OrderProduct.findOne({
                 where: { id: orderDetail[h].orderId },
+                raw: true,
+                nest: true,
               });
               if (order.statusId != "S7") {
                 quantity = quantity - orderDetail[h].quantity;
               }
             }
 
-            // res.productDetail[i].productDetailConfig[k].stock = quantity;
+            res.productDetail[i].productDetailConfig[k].stock = quantity;
             // console.log(
             //   "stock:",
             //   res.productDetail[i].productDetailConfig[k].stock
