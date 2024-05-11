@@ -114,44 +114,64 @@ export const register = (body) =>
 export const login = (data) =>
   new Promise(async (resolve, reject) => {
     try {
-      const response = await db.User.findOne({
-        where: { email: data.email }, // Thay body.email thành data.email
-        raw: true,
-      });
+      if (!data.email || !data.password) {
+        resolve({
+          errCode: 4,
+          errMessage: "Missing required parameters!",
+        });
+      } else {
+        const response = await db.User.findOne({
+          where: { email: data.email }, // Thay body.email thành data.email
+          raw: true,
+        });
+        let userData = {};
 
-      const isChecked =
-        response && bcrypt.compareSync(data.password, response.password);
-      const token = isChecked
-        ? jwt.sign(
-            { id: response.id, email: response.email, roleId: response.roleId },
-            process.env.JWT_SECRET,
-            { expiresIn: "5d" }
-          )
-        : null;
+        const isChecked =
+          response && bcrypt.compareSync(data.password, response.password);
+        const token = isChecked
+          ? jwt.sign(
+              {
+                id: response.id,
+                email: response.email,
+                roleId: response.roleId,
+              },
+              process.env.JWT_SECRET,
+              { expiresIn: "5d" }
+            )
+          : null;
 
-      let user = await db.User.findOne({
-        attributes: [
-          "email",
-          "roleId",
-          "password",
-          "firstName",
-          "lastName",
-          "id",
-        ],
-        where: { email: data.email, statusId: "S1" },
-        raw: true,
-      });
+        let user = await db.User.findOne({
+          attributes: [
+            "email",
+            "roleId",
+            "password",
+            "firstName",
+            "lastName",
+            "id",
+          ],
+          where: { email: data.email, statusId: "S1" },
+          raw: true,
+        });
+        if (user) {
+          if (isChecked) {
+            userData.errCode = 0;
+            userData.errMessage = "Logged in successfully";
 
-      resolve({
-        err: token ? 0 : 1,
-        mes: token
-          ? "Login is successful"
-          : response
-          ? "Password is wrong"
-          : "Email has not been registered",
-        user: user,
-        access_token: token,
-      });
+            delete user.password;
+
+            userData.user = user;
+            userData.accessToken = token;
+          } else {
+            userData.errCode = 3;
+
+            userData.errMessage = "Wrong password";
+          }
+        } else {
+          userData.errCode = 2;
+          userData.errMessage = "User not found!";
+        }
+        resolve(userData);
+      }
     } catch (error) {
       reject(error);
     }
