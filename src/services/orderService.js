@@ -42,26 +42,32 @@ export const createNewOrder = (data) => {
               raw: true,
               nest: true,
             });
-            console.log(
-              "data.arrDataShopCart[i].productId",
-              i,
-              data.arrDataShopCart[i].productId
-            );
+
             //  productDetailSize.stock = productDetailSize.stock - data.arrDataShopCart[i].quantity
             // await productDetailConfig1.save();
           }
         }
         if (data.voucherId && data.userId) {
-          let voucherUses = await db.VoucherUsed.findOne({
-            where: {
-              voucherId: data.voucherId,
-              userId: data.userId,
-            },
-            raw: true,
-            nest: true,
-          });
-          voucherUses.status = 1;
-          await voucherUses.save();
+          // let voucherUses = await db.VoucherUsed.findOne({
+          //   where: {
+          //     voucherId: data.voucherId,
+          //     userId: data.userId,
+          //   },
+          //   raw: true,
+          //   nest: true,
+          // });
+          // voucherUses.status = 1;
+          // await voucherUses.save();
+
+          await db.VoucherUsed.update(
+            { status: 1 },
+            {
+              where: {
+                voucherId: data.voucherId,
+                userId: data.userId,
+              },
+            }
+          );
         }
         resolve({
           errCode: 0,
@@ -234,7 +240,6 @@ export const getDetailOrderById = (id) => {
 export const updateStatusOrder = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
-      // console.log("data back12312312", data);
       if (!data.id || !data.statusId) {
         resolve({
           errCode: 1,
@@ -245,18 +250,6 @@ export const updateStatusOrder = (data) => {
           where: { id: data.id },
           raw: false,
         });
-        // console.log("order123123", order);
-        // console.log(
-        //   "truoc khi gan order.dataValues.statusId",
-        //   order.dataValues.statusId
-        // );
-
-        // order.dataValues.statusId = data.statusId;
-
-        // console.log(
-        //   "sau khi gan order.dataValues.statusId",
-        //   order.dataValues.statusId
-        // );
 
         await db.OrderProduct.update(
           { statusId: data.statusId },
@@ -269,22 +262,19 @@ export const updateStatusOrder = (data) => {
         );
 
         // await order.save();
-        let order1 = await db.OrderProduct.findOne({
-          where: { id: data.id },
-          raw: false,
-        });
-        console.log("order1", order1);
 
         if (
           data.statusId == "S7" &&
           data.dataOrder.orderDetail &&
           data.dataOrder.orderDetail.length > 0
         ) {
+          //check lai ham nay 13/5
           for (let i = 0; i < data.dataOrder.orderDetail.length; i++) {
             let productDetailSize = await db.ProductDetailConfig.findOne({
               where: { id: data.dataOrder.orderDetail[i].productDetailSize.id },
               raw: false,
             });
+            console.log("productDetailSize", productDetailSize.stock);
             productDetailSize.stock =
               productDetailSize.stock + data.dataOrder.orderDetail[i].quantity;
             await productDetailSize.save();
