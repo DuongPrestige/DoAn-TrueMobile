@@ -145,7 +145,6 @@ export const getAllShopCartByUserId = (id) => {
           raw: true,
           nest: true,
         });
-        console.log("123123", res);
         for (let i = 0; i < res.length; i++) {
           res[i].productdetailconfigData = await db.ProductDetailConfig.findOne(
             {

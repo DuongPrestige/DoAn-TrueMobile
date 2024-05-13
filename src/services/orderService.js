@@ -1,7 +1,7 @@
 import { raw } from "mysql2";
 import db from "../models";
 const { Op } = require("sequelize");
-
+// const { Sequelize, Op } = require("sequelize");
 import { EXCHANGE_RATES } from "../helpers/constant";
 
 export const createNewOrder = (data) => {
@@ -21,6 +21,7 @@ export const createNewOrder = (data) => {
           voucherId: data.voucherId,
           note: data.note,
         });
+
         data.arrDataShopCart = data.arrDataShopCart.map((item, index) => {
           item.orderId = product.dataValues.id;
           return item;
@@ -34,13 +35,20 @@ export const createNewOrder = (data) => {
           await db.ShopCart.destroy({
             where: { userId: data.userId },
           });
+
           for (let i = 0; i < data.arrDataShopCart.length; i++) {
-            let productDetailConfig = await db.ProductDetailConfig.findOne({
+            let productDetailConfig1 = await db.ProductDetailConfig.findOne({
               where: { id: data.arrDataShopCart[i].productId },
-              raw: false,
+              raw: true,
+              nest: true,
             });
+            console.log(
+              "data.arrDataShopCart[i].productId",
+              i,
+              data.arrDataShopCart[i].productId
+            );
             //  productDetailSize.stock = productDetailSize.stock - data.arrDataShopCart[i].quantity
-            await productDetailConfig.save();
+            // await productDetailConfig1.save();
           }
         }
         if (data.voucherId && data.userId) {
@@ -49,7 +57,8 @@ export const createNewOrder = (data) => {
               voucherId: data.voucherId,
               userId: data.userId,
             },
-            raw: false,
+            raw: true,
+            nest: true,
           });
           voucherUses.status = 1;
           await voucherUses.save();
@@ -69,11 +78,6 @@ export const getAllOrders = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
       let objectFilter = {
-        include: [
-          { model: db.TypeShip, as: "typeShipData" },
-          { model: db.Voucher, as: "voucherData" },
-          { model: db.Allcode, as: "statusOrderData" },
-        ],
         order: [["createdAt", "DESC"]],
         raw: true,
         nest: true,
@@ -84,13 +88,29 @@ export const getAllOrders = (data) => {
       }
       if (data.statusId && data.statusId !== "ALL")
         objectFilter.where = { statusId: data.statusId };
-      let res = await db.OrderProduct.findAndCountAll(objectFilter);
+
+      let res = await db.OrderProduct.findAndCountAll({
+        objectFilter,
+        include: [
+          { model: db.TypeShip, as: "typeShipData" },
+          { model: db.Voucher, as: "voucherData" },
+          { model: db.Allcode, as: "statusOrderData" },
+        ],
+        raw: true,
+        nest: true,
+      });
       for (let i = 0; i < res.rows.length; i++) {
         let addressUser = await db.AddressUser.findOne({
           where: { id: res.rows[i].addressUserId },
+
+          raw: true,
+          nest: true,
         });
         let shipper = await db.User.findOne({
           where: { id: res.rows[i].shipperId },
+
+          raw: true,
+          nest: true,
         });
 
         if (addressUser) {
@@ -98,6 +118,9 @@ export const getAllOrders = (data) => {
             where: {
               id: addressUser.userId,
             },
+
+            raw: true,
+            nest: true,
           });
           res.rows[i].userData = user;
           res.rows[i].addressUser = addressUser;
@@ -139,12 +162,18 @@ export const getDetailOrderById = (id) => {
         order.voucherData.typeVoucherOfVoucherData =
           await db.TypeVoucher.findOne({
             where: { id: order.voucherData.typeVoucherId },
+            raw: true,
+            nest: true,
           });
         let orderDetail = await db.OrderDetail.findAll({
           where: { orderId: id },
+          raw: true,
+          nest: true,
         });
         let addressUser = await db.AddressUser.findOne({
           where: { id: order.addressUserId },
+          raw: true,
+          nest: true,
         });
         order.addressUser = addressUser;
         let user = await db.User.findOne({
@@ -169,12 +198,18 @@ export const getDetailOrderById = (id) => {
             });
           orderDetail[i].productDetail = await db.ProductDetail.findOne({
             where: { id: orderDetail[i].productDetailSize.productdetailId },
+            raw: true,
+            nest: true,
           });
           orderDetail[i].product = await db.Product.findOne({
             where: { id: orderDetail[i].productDetail.productId },
+            raw: true,
+            nest: true,
           });
           orderDetail[i].productImage = await db.ProductImage.findAll({
             where: { productdetailId: orderDetail[i].productDetail.id },
+            raw: true,
+            nest: true,
           });
           for (let j = 0; j < orderDetail[i].productImage.length; j++) {
             orderDetail[i].productImage[j].image = new Buffer(
@@ -199,6 +234,7 @@ export const getDetailOrderById = (id) => {
 export const updateStatusOrder = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
+      // console.log("data back12312312", data);
       if (!data.id || !data.statusId) {
         resolve({
           errCode: 1,
@@ -209,10 +245,36 @@ export const updateStatusOrder = (data) => {
           where: { id: data.id },
           raw: false,
         });
+        // console.log("order123123", order);
+        // console.log(
+        //   "truoc khi gan order.dataValues.statusId",
+        //   order.dataValues.statusId
+        // );
 
-        order.dataValues.statusId = data.statusId;
-        await order.save();
-        // cong lai stock khi huy don
+        // order.dataValues.statusId = data.statusId;
+
+        // console.log(
+        //   "sau khi gan order.dataValues.statusId",
+        //   order.dataValues.statusId
+        // );
+
+        await db.OrderProduct.update(
+          { statusId: data.statusId },
+          {
+            where: {
+              id: data.id,
+            },
+            raw: false,
+          }
+        );
+
+        // await order.save();
+        let order1 = await db.OrderProduct.findOne({
+          where: { id: data.id },
+          raw: false,
+        });
+        console.log("order1", order1);
+
         if (
           data.statusId == "S7" &&
           data.dataOrder.orderDetail &&
@@ -220,7 +282,7 @@ export const updateStatusOrder = (data) => {
         ) {
           for (let i = 0; i < data.dataOrder.orderDetail.length; i++) {
             let productDetailSize = await db.ProductDetailConfig.findOne({
-              where: { id: data.dataOrder.orderDetail[i].productId },
+              where: { id: data.dataOrder.orderDetail[i].productDetailSize.id },
               raw: false,
             });
             productDetailSize.stock =
@@ -249,9 +311,11 @@ export const getAllOrdersByUser = (userId) => {
       } else {
         let addressUser = await db.AddressUser.findAll({
           where: { userId: userId },
+          raw: true,
+          nest: true,
         });
+
         const test = [];
-        console.log("addressUser :", addressUser);
         for (let i = 0; i < addressUser.length; i++) {
           addressUser[i].order = await db.OrderProduct.findAll({
             where: { addressUserId: addressUser[i].id },
@@ -270,13 +334,15 @@ export const getAllOrdersByUser = (userId) => {
                 where: {
                   id: addressUser[i].order[j].voucherData.typeVoucherId,
                 },
+                raw: true,
+                nest: true,
               });
             //get order detail
             let orderDetail = await db.OrderDetail.findAll({
               where: { orderId: addressUser[i].order[j].id },
               raw: true,
+              nest: true,
             });
-
             for (let k = 0; k < orderDetail.length; k++) {
               orderDetail[k].productDetailSize =
                 await db.ProductDetailConfig.findOne({
@@ -312,14 +378,9 @@ export const getAllOrdersByUser = (userId) => {
                   "base64"
                 ).toString("binary");
               }
-              // console.log("++++++++++++++++++++++++++++++++++++++")
-              // console.log("orderDetail:",orderDetail)
             }
 
             addressUser[i].order[j].orderDetail = orderDetail;
-            // test.push(addressUser[i].order[j].orderDetail)
-            // console.log("++++++++add", orderDetail)
-            // console.log("addressUser mang:",addressUser[i].order[j].orderDetail)
           }
         }
 
@@ -337,7 +398,6 @@ export const getAllOrdersByUser = (userId) => {
 export const getAllOrdersByShipper = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
-      console.log(data.shipperId);
       let objectFilter = {
         include: [
           { model: db.TypeShip, as: "typeShipData" },
@@ -360,10 +420,14 @@ export const getAllOrdersByShipper = (data) => {
       for (let i = 0; i < res.length; i++) {
         let addressUser = await db.AddressUser.findOne({
           where: { id: res[i].addressUserId },
+          raw: true,
+          nest: true,
         });
         if (addressUser) {
           let user = await db.User.findOne({
             where: { id: addressUser.userId },
+            raw: true,
+            nest: true,
           });
           res[i].userData = user;
           res[i].addressUser = addressUser;
@@ -403,16 +467,18 @@ export const paymentOrder = (data) => {
         );
         data.result[i].productDetail = await db.ProductDetail.findOne({
           where: { id: data.result[i].productDetailSize.productdetailId },
+          raw: true,
+          nest: true,
         });
         data.result[i].product = await db.Product.findOne({
           where: { id: data.result[i].productDetail.productId },
+          raw: true,
+          nest: true,
         });
         data.result[i].realPrice = parseFloat(
           (data.result[i].realPrice / EXCHANGE_RATES.USD).toFixed(2)
         );
 
-        console.log(data.result[i].realPrice);
-        console.log(data.total);
         listItem.push({
           name:
             data.result[i].product.name +
@@ -428,7 +494,6 @@ export const paymentOrder = (data) => {
           quantity: data.result[i].quantity,
         });
         totalPriceProduct += data.result[i].realPrice * data.result[i].quantity;
-        console.log(data.total - totalPriceProduct);
       }
       listItem.push({
         name: "Phi ship + Voucher",
@@ -635,7 +700,8 @@ export const confirmOrder = (data) => {
       } else {
         let orderProduct = await db.OrderProduct.findOne({
           where: { id: data.orderId },
-          raw: false,
+          raw: true,
+          nest: true,
         });
         orderProduct.shipperId = data.shipperId;
         orderProduct.statusId = data.statusId;
@@ -668,8 +734,6 @@ export const paymentOrderVnpay = (req) => {
       var createDate = process.env.DATE_VNPAYMENT;
       var orderId = uuidv4();
 
-      console.log("createDate", createDate);
-      console.log("orderId", orderId);
       var amount = req.body.amount;
       var bankCode = req.body.bankCode;
 
@@ -707,7 +771,7 @@ export const paymentOrderVnpay = (req) => {
       vnp_Params["vnp_SecureHash"] = signed;
 
       vnpUrl += "?" + querystring.stringify(vnp_Params, { encode: false });
-      console.log(vnpUrl);
+
       resolve({
         errCode: 200,
         link: vnpUrl,
@@ -781,7 +845,8 @@ export const updateImageOrder = (data) => {
       } else {
         let order = await db.OrderProduct.findOne({
           where: { id: data.id },
-          raw: false,
+          raw: true,
+          nest: true,
         });
         order.image = data.image;
         await order.save();

@@ -435,7 +435,6 @@ export const getAllVoucherByUserId = (data) => {
             raw: true,
             nest: true,
           });
-          console.log("12312", res.rows[i].voucherData);
 
           let voucherUsedCount = await db.VoucherUsed.findAll({
             where: {
