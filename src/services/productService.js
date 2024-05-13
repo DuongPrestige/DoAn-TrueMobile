@@ -372,7 +372,7 @@ export const createNewProductDetail = (data) => {
           await db.ProductDetailConfig.create({
             productdetailId: productdetail.id,
             color: data.color,
-            rom: data.rom,
+            romId: data.rom,
             screen: data.screen,
             os: data.os,
             backcam: data.backcam,
