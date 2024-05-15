@@ -248,11 +248,16 @@ export const getAllCategoryBlog = (type) => {
       } else {
         let allcode = await db.Allcode.findAll({
           where: { type: type },
+          raw: true,
+          nest: true,
         });
         for (let i = 0; i < allcode.length; i++) {
           let blog = await db.Blog.findAll({
             where: { subjectId: allcode[i].code },
+            raw: true,
+            nest: true,
           });
+          console.log(blog, "123123");
           if (blog) allcode[i].countPost = blog.length;
         }
 
