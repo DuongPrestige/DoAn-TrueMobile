@@ -31,16 +31,6 @@ router.get("/get-all-product-user", controllers.getAllProductUser);
 router.get("/get-product-feature", controllers.getProductFeature);
 router.get("/get-product-new", controllers.getProductNew);
 router.get("/get-product-shopcart", controllers.getProductShopCart);
-
-//PRIVATE ROUTES
-router.use(verifyToken);
-
-router.use(isAdmin);
-// product table
-router.post("/create-new-product", controllers.createNewProduct);
-router.put("/update-product", controllers.updateProduct);
-
-router.get("/get-all-product-admin", controllers.getAllProductAdmin);
 //bo sung them con thieu 3 cai nay
 router.get("/get-detail-product-by-id", controllers.getDetailProductById);
 router.get(
@@ -51,6 +41,15 @@ router.get(
   "/get-all-product-detail-image-by-id",
   controllers.getAllProductDetailImageById
 );
+//PRIVATE ROUTES
+router.use(verifyToken);
+
+router.use(isAdmin);
+// product table
+router.post("/create-new-product", controllers.createNewProduct);
+router.put("/update-product", controllers.updateProduct);
+
+router.get("/get-all-product-admin", controllers.getAllProductAdmin);
 
 //
 //active & unactive product

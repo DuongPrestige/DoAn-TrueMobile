@@ -14,7 +14,7 @@ Content-Type: application/json
 
 {
     "email": "example@example.com",
-    "password": "Passw0rd"
+    "password": "123456"
 }
 
 ###
@@ -22,8 +22,8 @@ POST  http://localhost:8006/api/v1/user/login
 Content-Type: application/json
 
 {
-    "email": "acc1@gmail.com",
-    "password": "654321"
+    "email": "baocao1@gmail.com",
+    "password": "123456"
 }
 
 ###
