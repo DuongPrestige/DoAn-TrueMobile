@@ -123,7 +123,9 @@ export const listRoomOfUser = (userId) => {
                 })
             } else {
               let room = await db.RoomMessage.findAll({
-                where:{userOne:userId}
+                where:{userOne:userId},
+                raw: true,
+                nest: true
               })
 
              for(let i =0 ; i< room.length; i++){

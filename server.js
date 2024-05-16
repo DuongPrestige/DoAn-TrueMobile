@@ -1,12 +1,15 @@
 import cors from "cors";
 import express from "express";
+import bodyParser from "body-parser";
 require("dotenv").config();
-
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0
 import initRoute from "./src/routes";
+import {sendMessage} from './src/services/messageService'
+import http from 'http'
 
 require("./src/config/connection_db");
 
-const app = express();
+let app = express();
 
 app.use(
   cors({
@@ -14,7 +17,6 @@ app.use(
     method: ["GET, POST, OPTIONS, PUT, PATCH, DELETE"],
   })
 );
-
 //doc du lieu kieu json
 app.use(express.json({ limit: "50mb" }));
 //doc du lieu mang, object
@@ -28,7 +30,32 @@ app.use(
 
 initRoute(app);
 
-const PORT = process.env.PORT || 2007;
-const listener = app.listen(PORT, () => {
-  console.log("Server is running on the port " + listener.address().port);
+
+const server = http.createServer(app);
+
+const socketIo = require("socket.io")(server, {
+    cors: {
+        origin: "*",
+    }
+  }); 
+socketIo.on("connection", (socket) => { 
+    console.log("New client connected >>>>>>>>>>>>>>>>>>>>" + socket.id); 
+  
+    socket.on("sendDataClient", function(data) { 
+      sendMessage(data)
+      socketIo.emit("sendDataServer", { data });
+    })
+    socket.on("loadRoomClient", function(data) { 
+    
+      socketIo.emit("loadRoomServer", { data });
+    })
+    socket.on("disconnect", () => {
+      console.log("Client disconnected"); 
+    });
+  });
+let port = process.env.PORT || 2007;
+
+server.listen(port, () => {
+  console.log("Backend Nodejs is running on the port : " + port)
 });
+
