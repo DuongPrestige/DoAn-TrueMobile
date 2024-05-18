@@ -160,7 +160,14 @@ export const getAllShopCartByUserId = (id) => {
                   as: "romData",
                   attributes: ["value", "code"],
                 },
+                //add warranty ở đây
+                {
+                  model: db.Allcode,
+                  as: "warrantyData",
+                  attributes: ["value", "code"],
+                },
               ],
+
               raw: true,
               nest: true,
             }

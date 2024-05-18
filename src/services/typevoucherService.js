@@ -369,10 +369,15 @@ export const saveUserVoucher = (data) => {
           where: { voucherId: data.voucherId, userId: data.userId },
           raw: false,
         });
-        if (voucherused) {
+        if (voucherused && voucherused.status === 1) {
+          resolve({
+            errCode: -2,
+            errMessage: "Bạn đã dùng voucher này!",
+          });
+        } else if (voucherused && voucherused.status === 0) {
           resolve({
             errCode: 2,
-            errMessage: "Voucher has been saved !",
+            errMessage: "Voucher đã có trong kho",
           });
         } else {
           await db.VoucherUsed.create({
@@ -385,7 +390,7 @@ export const saveUserVoucher = (data) => {
           // await voucher.save()
           resolve({
             errCode: 0,
-            errMessage: "Save voucher successfully !",
+            errMessage: "Lụm voucher thành công !",
           });
         }
       }
@@ -412,7 +417,7 @@ export const getAllVoucherByUserId = (data) => {
         }
 
         let res = await db.VoucherUsed.findAndCountAll({
-          objectFilter,
+          where: { userId: data.id, status: 0 },
           raw: true,
           nest: true,
         });

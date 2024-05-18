@@ -12,6 +12,9 @@ const router = express.Router();
 router.get("/get-product-detail-by-id", controllers.getDetailProductDetailById);
 // product images table
 
+//check warranty
+router.get("/check-warranty", controllers.checkWarranty);
+
 router.get(
   "/get-product-detail-image-by-id",
   controllers.getDetailProductImageById

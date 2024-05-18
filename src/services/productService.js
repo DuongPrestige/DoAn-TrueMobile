@@ -1,6 +1,7 @@
+import { number } from "joi";
 import db from "../models";
 const { Op } = require("sequelize");
-
+const moment = require("moment");
 export const createNewProduct = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -52,6 +53,8 @@ export const createNewProduct = (data) => {
               sim: data.sim,
               battery: data.battery,
               design: data.design,
+              warrantyId: data.warranty,
+              serialNumber: data.serialNumber,
             });
           }
         }
@@ -381,6 +384,8 @@ export const createNewProductDetail = (data) => {
             sim: data.sim,
             battery: data.battery,
             design: data.design,
+            warrantyId: data.warranty,
+            serialNumber: data.serialNumber,
           });
         }
         resolve({
@@ -720,6 +725,8 @@ export const createNewProductDetailConfig = (data) => {
           sim: data.sim,
           battery: data.battery,
           design: data.design,
+          warrantyId: data.warranty,
+          serialNumber: data.serialNumber,
         });
         resolve({
           errCode: 0,
@@ -781,7 +788,9 @@ export const updateProductDetailConfig = (data) => {
           res.sim = data.sim;
           res.battery = data.battery;
           res.design = data.design;
-          await res.save();
+          (res.warrantyId = data.warranty),
+            (res.serialNumber = data.serialNumber),
+            await res.save();
           resolve({
             errCode: 0,
             errMessage: "Update product detail config successfully!",
@@ -901,6 +910,122 @@ export const getProductFeature = (limit) => {
   });
 };
 
+function calculateMonth1(a, b) {
+  // Chuyển đổi chuỗi a sang dạng Date
+  const dateA = new Date(a);
+  console.log("a: ", a);
+
+  console.log("dateA: ", dateA);
+
+  // Thêm số tháng b vào số tháng hiện tại của a
+  dateA.setMonth(dateA.getMonth() + b);
+
+  // Định dạng lại dateA thành chuỗi yyyy-MM-dd
+  const dateC = dateA.toISOString().slice(0, 10);
+
+  // Trả về kết quả
+  return dateC;
+}
+
+function calculateMonth(a, b) {
+  // Chuyển đổi chuỗi a sang dạng Date
+  const dateA = new Date(a);
+  // Thêm số tháng b vào số tháng hiện tại của a
+  dateA.setMonth(dateA.getMonth() + b);
+
+  // Định dạng lại dateA thành chuỗi yyyy-MM-dd
+  const dateC = dateA.toISOString().slice(0, 10);
+
+  // Trả về kết quả
+  return dateC;
+}
+
+function checkWarranty(startDate) {
+  const startDateObject = new Date(startDate);
+  const today = new Date();
+
+  if (today > startDateObject) {
+    return `Sản phẩm đã hết hạn bảo hành từ ngày: ${startDate}`;
+  } else {
+    return `Còn bảo hành hành đến ngày: ${startDate}`;
+  }
+}
+
+export const checkWarrantyAPI = (data) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const res = await db.OrderDetail.findOne({
+        where: { checkWarranty: data.warranty },
+        raw: true,
+        nest: true,
+      });
+      if (!res) {
+        resolve({
+          errCode: -1,
+          errMessage: "Không tìm thấy thông tin bảo hành!",
+        });
+      }
+      const checkS6 = await db.OrderProduct.findOne({
+        where: { id: res.orderId, statusId: "S6" },
+        raw: true,
+        nest: true,
+      });
+
+      if (!checkS6) {
+        resolve({
+          errCode: 1,
+          errMessage: "Không tìm thấy thông tin bảo hành!",
+        });
+      }
+
+      const buyDate = res.checkWarranty.slice(2, 12);
+      const warrantyTime = +res.checkWarranty.slice(12, 14);
+      const c = calculateMonth(buyDate, warrantyTime);
+      const warrantyStatus = checkWarranty(c);
+
+      // console.log(warrantyStatus);
+
+      //bắn ra thông tin sản phẩm
+      //tên
+      //ngày mua
+
+      const getProductDetailId = await db.ProductDetailConfig.findOne({
+        where: { id: res.productId },
+        include: [{ model: db.Allcode, as: "romData" }],
+        raw: true,
+        nest: true,
+      });
+      const getProductId = await db.ProductDetail.findOne({
+        where: { id: getProductDetailId.productdetailId },
+        raw: true,
+        nest: true,
+      });
+      const getProductName = await db.Product.findOne({
+        where: { id: getProductId.productId },
+        raw: true,
+        nest: true,
+      });
+
+      const nameProduct =
+        getProductName.name +
+        "-" +
+        getProductId.nameDetail +
+        "-" +
+        getProductDetailId.romData.value;
+
+      resolve({
+        errCode: 0,
+        nameProdudct: `Sản Phẩm: ${nameProduct}`,
+        serialNumber: `Số Sê-ri: ${data.warranty}`,
+        messBuyDate: `Ngày mua: ${buyDate}`,
+        messWarranty: warrantyStatus,
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 export const getProductNew = (limit) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -923,6 +1048,7 @@ export const getProductNew = (limit) => {
         raw: true,
         nest: true,
       });
+
       for (let i = 0; i < res.length; i++) {
         let objectFilterProductDetail = {
           where: { productId: res[i].id },

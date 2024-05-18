@@ -255,3 +255,15 @@ export const getAllProductDetailImageById = async (req, res) => {
     return internalServer(res);
   }
 };
+
+//check bao hanh
+
+export const checkWarranty = async (req, res) => {
+  try {
+    let data = await services.checkWarrantyAPI(req.query);
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error in checkWarranty:", error);
+    return internalServer(res);
+  }
+};

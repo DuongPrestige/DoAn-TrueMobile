@@ -1,5 +1,7 @@
 import { raw } from "mysql2";
 import db from "../models";
+const moment = require("moment");
+
 const { Op } = require("sequelize");
 // const { Sequelize, Op } = require("sequelize");
 import { EXCHANGE_RATES } from "../helpers/constant";
@@ -28,6 +30,90 @@ export const createNewOrder = (data) => {
         });
         //bulkCreate() to insert multiple records
         await db.OrderDetail.bulkCreate(data.arrDataShopCart);
+
+        for (let i = 0; i < data.arrDataShopCart.length; i++) {
+          // const warrantyDetail = await db.ProductDetailConfig.findOne({
+          //   where: { id: data.arrDataShopCart[i].productId },
+          //   raw: true,
+          //   nest: true,
+          // });
+
+          // const getAddressUser = await db.OrderProduct.findOne({
+          //   where: { id: data.arrDataShopCart[i].orderId },
+          //   raw: true,
+          //   nest: true,
+          // });
+
+          // const getUserId = await db.AddressUser.findOne({
+          //   where: {
+          //     id: getAddressUser.addressUserId,
+          //   },
+          //   raw: true,
+          //   nest: true,
+          // });
+
+          // await db.OrderDetail.update(
+          //   {
+          //     checkWarranty:
+          //       moment(data.arrDataShopCart[i].createAt)
+          //         .format("YYYY-MM-DD")
+          //         .toString() +
+          //       warrantyDetail.warrantyId.toString() +
+          //       data.arrDataShopCart[i].productId.toString() +
+          //       getUserId.userId.toString(),
+          //   },
+          //   {
+          //     where: {
+          //       productId: data.arrDataShopCart[i].productId,
+          //     },
+          //   }
+          // );
+
+          //edit
+          const findOderDetailId = await db.OrderDetail.findOne({
+            where: {
+              productId: data.arrDataShopCart[i].productId,
+              orderId: data.arrDataShopCart[i].orderId,
+            },
+            raw: true,
+            nest: true,
+          });
+
+          const warrantyDetail = await db.ProductDetailConfig.findOne({
+            where: { id: data.arrDataShopCart[i].productId },
+            raw: true,
+            nest: true,
+          });
+          let makeColor = "";
+          let makeRom = "";
+
+          if (+findOderDetailId.id % 2) {
+            makeColor = "Y/";
+            makeRom = "D";
+          } else {
+            makeColor = "N/";
+            makeRom = "P";
+          }
+
+          await db.OrderDetail.update(
+            {
+              checkWarranty:
+                makeColor +
+                moment(findOderDetailId.createAt)
+                  .format("YYYY-MM-DD")
+                  .toString() +
+                warrantyDetail.warrantyId.toString() +
+                findOderDetailId.id.toString() +
+                makeRom,
+            },
+            {
+              where: {
+                id: findOderDetailId.id,
+              },
+            }
+          );
+        }
+
         let res = await db.ShopCart.findOne({
           where: { userId: data.userId, statusId: 0 },
         });
