@@ -521,7 +521,7 @@ export const getDetailProductImageById = (id) => {
 export const updateProductDetailImage = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (!data.id || !data.caption || !data.image) {
+      if (!data.id || !data.image) {
         resolve({
           errCode: 1,
           errMessage: "Missing required parameter!",
@@ -665,6 +665,11 @@ export const getAllProductDetailConfigById = (data) => {
               as: "colorData",
               attributes: ["value", "code"],
             },
+            {
+              model: db.Allcode,
+              as: "warrantyData",
+              attributes: ["value", "code"],
+            },
           ],
           raw: true,
           nest: true,
@@ -706,7 +711,7 @@ export const getAllProductDetailConfigById = (data) => {
 export const createNewProductDetailConfig = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (!data.productdetailId || !data.colorId || !data.romId) {
+      if (!data.productdetailId || !data.romId) {
         resolve({
           errCode: 1,
           errMessage: "Missing required parameter!",
@@ -725,7 +730,7 @@ export const createNewProductDetailConfig = (data) => {
           sim: data.sim,
           battery: data.battery,
           design: data.design,
-          warrantyId: data.warranty,
+          warrantyId: data.warrantyId,
           serialNumber: data.serialNumber,
         });
         resolve({
@@ -765,11 +770,11 @@ export const getDetailProductDetailConfigById = (id) => {
 export const updateProductDetailConfig = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (!data.id || !data.colorId || !data.romId) {
+      if (!data.id || !data.romId) {
         resolve({
           errCode: 1,
           // dung badrequest
-          errMessage: "Missing required parameter!",
+          errMessage: "Missing required parameter xxx!",
         });
       } else {
         let res = await db.ProductDetailConfig.findOne({
@@ -780,7 +785,7 @@ export const updateProductDetailConfig = (data) => {
           res.colorId = data.colorId;
           res.romId = data.romId;
           res.screen = data.screen;
-          res.os = data.height;
+          res.os = data.os;
           res.backcam = data.backcam;
           res.frontcam = data.frontcam;
           res.cpu = data.cpu;
@@ -788,9 +793,34 @@ export const updateProductDetailConfig = (data) => {
           res.sim = data.sim;
           res.battery = data.battery;
           res.design = data.design;
-          (res.warrantyId = data.warranty),
-            (res.serialNumber = data.serialNumber),
-            await res.save();
+          res.warrantyId = data.warrantyId;
+          res.serialNumber = data.serialNumber;
+          await res.save();
+
+          // await db.OrderDetail.update(
+          //   {
+          //     colorId: data.colorId,
+          //     romId: data.romId,
+          //     screen: data.screen,
+          //     os: data.height,
+          //     backcam: data.backcam,
+          //     frontcam: data.frontcam,
+          //     cpu: data.cpu,
+          //     ram: data.ram,
+          //     sim: data.sim,
+          //     battery: data.battery,
+          //     design: data.design,
+          //     warrantyId: data.warranty,
+          //     serialNumber: data.serialNumber,
+          //   },
+          //   {
+          //     where: {
+          //       id: data.id,
+          //     },
+          //   }
+          // );
+
+          //check
           resolve({
             errCode: 0,
             errMessage: "Update product detail config successfully!",
@@ -1045,6 +1075,7 @@ export const getProductNew = (limit) => {
         ],
         limit: +limit,
         order: [["createdAt", "DESC"]],
+        where: { statusId: "S1" },
         raw: true,
         nest: true,
       });
