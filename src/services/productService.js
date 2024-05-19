@@ -2,6 +2,38 @@ import { number } from "joi";
 import db from "../models";
 const { Op } = require("sequelize");
 const moment = require("moment");
+
+function dynamicSortMultiple() {
+  var props = arguments;
+  return function (obj1, obj2) {
+    var i = 0,
+      result = 0,
+      numberOfProperties = props.length;
+    /* try getting a different result from 0 (equal)
+     * as long as we have extra properties to compare
+     */
+    while (result === 0 && i < numberOfProperties) {
+      result = dynamicSort(props[i])(obj1, obj2);
+      i++;
+    }
+    return result;
+  };
+}
+
+function dynamicSort(property) {
+  var sortOrder = 1;
+  if (property[0] === "-") {
+    sortOrder = -1;
+    property = property.substr(1);
+  }
+  return function (a, b) {
+    /// sap xep tang dan
+    var result =
+      a[property] < b[property] ? -1 : a[property] > b[property] ? 1 : 0;
+    return result * sortOrder;
+  };
+}
+
 export const createNewProduct = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -222,6 +254,14 @@ export const getAllProductUser = (data) => {
       if (data.brandId && data.brandId !== "ALL")
         objectFilter.where = { ...objectFilter.where, brandId: data.brandId };
       if (data.sortName === "true") objectFilter.order = [["name", "ASC"]];
+
+      // if (data.sortPrice === "true") {
+      //   objectFilter.order = [["discountPrice", "ASC"]]; // Sắp xếp theo giá tăng dần
+      // }
+      // if (data.sortPrice === "false") {
+      //   objectFilter.order = [["discountPrice", "DESC"]];
+      // }
+
       if (data.keyword !== "")
         objectFilter.where = {
           ...objectFilter.where,
@@ -1030,26 +1070,40 @@ export const checkWarrantyAPI = (data) => {
         raw: true,
         nest: true,
       });
-      const getProductName = await db.Product.findOne({
-        where: { id: getProductId.productId },
+
+      const getImageId = await db.ProductImage.findOne({
+        where: { id: getProductDetailId.productdetailId },
         raw: true,
         nest: true,
       });
+      if (getImageId) {
+        getImageId.image = new Buffer(getImageId.image, "base64").toString(
+          "binary"
+        );
+        console.log("getImageId: ", getImageId);
 
-      const nameProduct =
-        getProductName.name +
-        "-" +
-        getProductId.nameDetail +
-        "-" +
-        getProductDetailId.romData.value;
+        const getProductName = await db.Product.findOne({
+          where: { id: getProductId.productId },
+          raw: true,
+          nest: true,
+        });
 
-      resolve({
-        errCode: 0,
-        nameProdudct: `Sản Phẩm: ${nameProduct}`,
-        serialNumber: `Số Sê-ri: ${data.warranty}`,
-        messBuyDate: `Ngày mua: ${buyDate}`,
-        messWarranty: warrantyStatus,
-      });
+        const nameProduct =
+          getProductName.name +
+          "-" +
+          getProductId.nameDetail +
+          "-" +
+          getProductDetailId.romData.value;
+
+        resolve({
+          errCode: 0,
+          nameProdudct: `Sản Phẩm: ${nameProduct}`,
+          serialNumber: `Số Sê-ri: ${data.warranty}`,
+          messBuyDate: `Ngày mua: ${buyDate}`,
+          messWarranty: warrantyStatus,
+          image: getImageId.image,
+        });
+      }
     } catch (error) {
       reject(error);
     }
