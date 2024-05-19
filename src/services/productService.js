@@ -1072,7 +1072,7 @@ export const checkWarrantyAPI = (data) => {
       });
 
       const getImageId = await db.ProductImage.findOne({
-        where: { id: getProductDetailId.productdetailId },
+        where: { productdetailId: getProductDetailId.productdetailId },
         raw: true,
         nest: true,
       });
