@@ -185,12 +185,13 @@ export const getAllCodeService = (typeInput) => {
 //             reject(error);
 //         }
 //     })
-
 export const getListAllCodeService = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
       let objectFilter = {
         where: { type: data.type },
+        order: [['createdAt', 'DESC']],
+
       };
       if (data.limit && data.offset) {
         objectFilter.limit = +data.limit;

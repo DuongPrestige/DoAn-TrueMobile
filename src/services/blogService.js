@@ -91,7 +91,9 @@ export const getAllBlog = (data) => {
 
                 ],
                 raw: true,
-                nest: true
+                nest: true,
+                order: [['createdAt', 'DESC']],
+
             }
             if (data.limit && data.offset) {
                 objectFilter.limit = +data.limit

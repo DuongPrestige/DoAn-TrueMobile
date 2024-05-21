@@ -10,10 +10,17 @@ export const createNewRoom = (data) => {
                     errMessage: 'Missing required parameters !'
                 })
             } else {
+                console.log('helooo')
                 let userAdmin = await db.User.findOne({
-                    where: { email: 'chat@gmail.com' }
+                    where: { email: 'chat@gmail.com' },
+                    raw: true,
+                    nest: true
                 })
-                let room = await db.RoomMessage.findOne({ where: { userOne: data.userId1 } })
+                let room = await db.RoomMessage.findOne({
+                    where: { userOne: data.userId1 },
+                    raw: true,
+                    nest: true
+                })
                 if (room) {
                     resolve({
                         errCode: 2,

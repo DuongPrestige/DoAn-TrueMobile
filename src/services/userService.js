@@ -217,6 +217,7 @@ export const getAllUsers = (data) => {
         attributes: {
           exclude: ["password", "image"],
         },
+        order: [['createdAt', 'DESC']],
         include: [
           { model: db.Allcode, as: "roleData", attributes: ["value", "code"] },
           {

@@ -1,8 +1,17 @@
 import { raw } from "mysql2";
 import db from "../models";
+import { v4 as uuidv4 } from 'uuid';
 const moment = require("moment");
+var querystring = require('qs');
+var crypto = require("crypto");
+import paypal from 'paypal-rest-sdk'
 
 const { Op } = require("sequelize");
+paypal.configure({
+  'mode': 'sandbox',
+  'client_id': 'AaeuRt8WCq9SBliEVfEyXXQMosfJD-U9emlCflqe8Blz_KWZ3lnXh1piEMcXuo78MvWj0hBKgLN-FamT',
+  'client_secret': 'ENWZDMzk17X3mHFJli7sFlS9RT1Vi_aocaLsrftWZ2tjHtBVFMzr4kPf5_9iIcsbFWsHf95vXVi6EADv'
+});
 // const { Sequelize, Op } = require("sequelize");
 import { EXCHANGE_RATES } from "../helpers/constant";
 
@@ -170,27 +179,22 @@ export const getAllOrders = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
       let objectFilter = {
-        order: [["createdAt", "DESC"]],
+        include: [
+          { model: db.TypeShip, as: 'typeShipData' },
+          { model: db.Voucher, as: 'voucherData' },
+          { model: db.Allcode, as: 'statusOrderData' },
+
+        ],
+        order: [['createdAt', 'DESC']],
         raw: true,
-        nest: true,
-      };
+        nest: true
+      }
       if (data.limit && data.offset) {
         objectFilter.limit = +data.limit;
         objectFilter.offset = +data.offset;
       }
-      if (data.statusId && data.statusId !== "ALL")
-        objectFilter.where = { statusId: data.statusId };
-
-      let res = await db.OrderProduct.findAndCountAll({
-        objectFilter,
-        include: [
-          { model: db.TypeShip, as: "typeShipData" },
-          { model: db.Voucher, as: "voucherData" },
-          { model: db.Allcode, as: "statusOrderData" },
-        ],
-        raw: true,
-        nest: true,
-      });
+      if (data.statusId && data.statusId !== "ALL") { objectFilter.where = { statusId: data.statusId }; }
+      let res = await db.OrderProduct.findAndCountAll(objectFilter);
       for (let i = 0; i < res.rows.length; i++) {
         let addressUser = await db.AddressUser.findOne({
           where: { id: res.rows[i].addressUserId },
@@ -726,20 +730,26 @@ export const paymentOrderVnpaySuccess = (data) => {
         item.orderId = product.dataValues.id;
         return item;
       });
-
+      console.log('>>>>>>>>>>>>>>>>>>>>data : /n', data, "/n >>>>>>>>>>>>>>>>>>>>>>>>>>");
       await db.OrderDetail.bulkCreate(data.arrDataShopCart);
       let res = await db.ShopCart.findOne({
         where: { userId: data.userId, statusId: 0 },
+        raw: true,
+        nest: true,
       });
       if (res) {
         await db.ShopCart.destroy({
           where: { userId: data.userId },
+          raw: true,
+          nest: true,
         });
         for (let i = 0; i < data.arrDataShopCart.length; i++) {
-          let productDetailSize = await db.ProductDetailSize.findOne({
+          console.log('333333333333333333333333333', data.arrDataShopCart[i].productId);
+          let productDetailSize = await db.ProductDetailConfig.findOne({
             where: { id: data.arrDataShopCart[i].productId },
             raw: false,
           });
+          console.log('222222222222222222222 ,', productDetailSize);
           productDetailSize.stock =
             productDetailSize.stock - data.arrDataShopCart[i].quantity;
           await productDetailSize.save();
@@ -761,6 +771,7 @@ export const paymentOrderVnpaySuccess = (data) => {
         errMessage: "ok",
       });
     } catch (error) {
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>error", error)
       reject(error);
     }
   });

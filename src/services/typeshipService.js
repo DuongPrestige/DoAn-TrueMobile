@@ -49,7 +49,9 @@ export const getDetailTypeshipById = (id) => {
 export const getAllTypeship = (data) => {
     return new Promise(async (resolve, reject) => {
         try {
-            let objectFilter = {}
+            let objectFilter = {
+                order: [['price', 'DESC']],
+            }
             if (data.limit && data.offset) {
                 objectFilter.limit = +data.limit
                 objectFilter.offset = +data.offset

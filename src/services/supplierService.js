@@ -55,7 +55,9 @@ export const getDetailSupplierById = (id) => {
 export const getAllSupplier = (data) => {
     return new Promise(async (resolve, reject) => {
         try {
-            let objectFilter = {}
+            let objectFilter = {
+                order: [['createdAt', 'DESC']],
+            }
             if (data.limit && data.offset) {
                 objectFilter.limit = +data.limit
                 objectFilter.offset = +data.offset

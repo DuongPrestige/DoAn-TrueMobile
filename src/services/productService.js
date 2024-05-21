@@ -153,6 +153,7 @@ export const getAllProductAdmin = (data) => {
             attributes: ["value", "code"],
           },
         ],
+        order: [['createdAt', 'DESC']],
         raw: true,
         nest: true,
       };

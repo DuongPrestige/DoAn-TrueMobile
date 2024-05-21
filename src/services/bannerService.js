@@ -62,6 +62,9 @@ export const getAllBanner = (data) => {
     try {
       let objectFilter = {
         where: { statusId: "S1" },
+        order: [['createdAt', 'DESC']],
+        raw: true,
+                    nest: true
       };
       if (data.limit && data.offset) {
         objectFilter.limit = +data.limit;

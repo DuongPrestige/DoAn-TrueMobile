@@ -132,18 +132,18 @@ export const getDetailReceiptById = (id) => {
 export const getAllReceipt = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
-      let objectFilter = {};
+      let objectFilter = {        order: [['createdAt', 'DESC']],raw: true,
+      nest: true,
+    };
       if (data.limit && data.offset) {
         objectFilter.limit = +data.limit;
         objectFilter.offset = +data.offset;
       }
 
       //  if(data.keyword !=='') objectFilter.where = {...objectFilter.where, name: {[Op.substring]: data.keyword  } }
-      let res = await db.Receipt.findAndCountAll({
-        objectFilter,
-        raw: true,
-        nest: true,
-      });
+      let res = await db.Receipt.findAndCountAll(
+        objectFilter      
+      );
       console.log("ress1:", res);
       //   let resall = await db.Receipt.findAll();
       //   console.log("resall:", resall);

@@ -74,6 +74,8 @@ export const getAllTypeVoucher = (data) => {
             attributes: ["value", "code"],
           },
         ],
+        order: [['createdAt', 'DESC']],
+
         raw: true,
         nest: true,
       };
@@ -239,6 +241,8 @@ export const getAllVoucher = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
       let objectFilter = {
+        order: [['createdAt', 'DESC']],
+
         include: [
           {
             model: db.TypeVoucher,
