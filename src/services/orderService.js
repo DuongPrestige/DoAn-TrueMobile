@@ -1,16 +1,18 @@
 import { raw } from "mysql2";
 import db from "../models";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 const moment = require("moment");
-var querystring = require('qs');
+var querystring = require("qs");
 var crypto = require("crypto");
-import paypal from 'paypal-rest-sdk'
+import paypal from "paypal-rest-sdk";
 
 const { Op } = require("sequelize");
 paypal.configure({
-  'mode': 'sandbox',
-  'client_id': 'AaeuRt8WCq9SBliEVfEyXXQMosfJD-U9emlCflqe8Blz_KWZ3lnXh1piEMcXuo78MvWj0hBKgLN-FamT',
-  'client_secret': 'ENWZDMzk17X3mHFJli7sFlS9RT1Vi_aocaLsrftWZ2tjHtBVFMzr4kPf5_9iIcsbFWsHf95vXVi6EADv'
+  mode: "sandbox",
+  client_id:
+    "AaeuRt8WCq9SBliEVfEyXXQMosfJD-U9emlCflqe8Blz_KWZ3lnXh1piEMcXuo78MvWj0hBKgLN-FamT",
+  client_secret:
+    "ENWZDMzk17X3mHFJli7sFlS9RT1Vi_aocaLsrftWZ2tjHtBVFMzr4kPf5_9iIcsbFWsHf95vXVi6EADv",
 });
 // const { Sequelize, Op } = require("sequelize");
 import { EXCHANGE_RATES } from "../helpers/constant";
@@ -24,6 +26,7 @@ export const createNewOrder = (data) => {
           errMessage: "Missing required parameter !",
         });
       } else {
+        console.log("check111111111111111111111111");
         let product = await db.OrderProduct.create({
           addressUserId: data.addressUserId,
           isPaymentOnlien: data.isPaymentOnlien,
@@ -41,44 +44,6 @@ export const createNewOrder = (data) => {
         await db.OrderDetail.bulkCreate(data.arrDataShopCart);
 
         for (let i = 0; i < data.arrDataShopCart.length; i++) {
-          // const warrantyDetail = await db.ProductDetailConfig.findOne({
-          //   where: { id: data.arrDataShopCart[i].productId },
-          //   raw: true,
-          //   nest: true,
-          // });
-
-          // const getAddressUser = await db.OrderProduct.findOne({
-          //   where: { id: data.arrDataShopCart[i].orderId },
-          //   raw: true,
-          //   nest: true,
-          // });
-
-          // const getUserId = await db.AddressUser.findOne({
-          //   where: {
-          //     id: getAddressUser.addressUserId,
-          //   },
-          //   raw: true,
-          //   nest: true,
-          // });
-
-          // await db.OrderDetail.update(
-          //   {
-          //     checkWarranty:
-          //       moment(data.arrDataShopCart[i].createAt)
-          //         .format("YYYY-MM-DD")
-          //         .toString() +
-          //       warrantyDetail.warrantyId.toString() +
-          //       data.arrDataShopCart[i].productId.toString() +
-          //       getUserId.userId.toString(),
-          //   },
-          //   {
-          //     where: {
-          //       productId: data.arrDataShopCart[i].productId,
-          //     },
-          //   }
-          // );
-
-          //edit
           const findOderDetailId = await db.OrderDetail.findOne({
             where: {
               productId: data.arrDataShopCart[i].productId,
@@ -180,20 +145,21 @@ export const getAllOrders = (data) => {
     try {
       let objectFilter = {
         include: [
-          { model: db.TypeShip, as: 'typeShipData' },
-          { model: db.Voucher, as: 'voucherData' },
-          { model: db.Allcode, as: 'statusOrderData' },
-
+          { model: db.TypeShip, as: "typeShipData" },
+          { model: db.Voucher, as: "voucherData" },
+          { model: db.Allcode, as: "statusOrderData" },
         ],
-        order: [['createdAt', 'DESC']],
+        order: [["createdAt", "DESC"]],
         raw: true,
-        nest: true
-      }
+        nest: true,
+      };
       if (data.limit && data.offset) {
         objectFilter.limit = +data.limit;
         objectFilter.offset = +data.offset;
       }
-      if (data.statusId && data.statusId !== "ALL") { objectFilter.where = { statusId: data.statusId }; }
+      if (data.statusId && data.statusId !== "ALL") {
+        objectFilter.where = { statusId: data.statusId };
+      }
       let res = await db.OrderProduct.findAndCountAll(objectFilter);
       for (let i = 0; i < res.rows.length; i++) {
         let addressUser = await db.AddressUser.findOne({
@@ -673,6 +639,52 @@ export const paymentOrderSuccess = (data) => {
               });
 
               await db.OrderDetail.bulkCreate(data.arrDataShopCart);
+              //ADD
+              for (let i = 0; i < data.arrDataShopCart.length; i++) {
+                const findOderDetailId = await db.OrderDetail.findOne({
+                  where: {
+                    productId: data.arrDataShopCart[i].productId,
+                    orderId: data.arrDataShopCart[i].orderId,
+                  },
+                  raw: true,
+                  nest: true,
+                });
+
+                const warrantyDetail = await db.ProductDetailConfig.findOne({
+                  where: { id: data.arrDataShopCart[i].productId },
+                  raw: true,
+                  nest: true,
+                });
+                let makeColor = "";
+                let makeRom = "";
+
+                if (+findOderDetailId.id % 2) {
+                  makeColor = "Y/";
+                  makeRom = "D";
+                } else {
+                  makeColor = "N/";
+                  makeRom = "P";
+                }
+
+                await db.OrderDetail.update(
+                  {
+                    checkWarranty:
+                      makeColor +
+                      moment(findOderDetailId.createAt)
+                        .format("YYYY-MM-DD")
+                        .toString() +
+                      warrantyDetail.warrantyId.toString() +
+                      findOderDetailId.id.toString() +
+                      makeRom,
+                  },
+                  {
+                    where: {
+                      id: findOderDetailId.id,
+                    },
+                  }
+                );
+              }
+
               let res = await db.ShopCart.findOne({
                 where: { userId: data.userId, statusId: 0 },
               });
@@ -730,8 +742,57 @@ export const paymentOrderVnpaySuccess = (data) => {
         item.orderId = product.dataValues.id;
         return item;
       });
-      console.log('>>>>>>>>>>>>>>>>>>>>data : /n', data, "/n >>>>>>>>>>>>>>>>>>>>>>>>>>");
+      console.log(
+        ">>>>>>>>>>>>>>>>>>>>data : /n",
+        data,
+        "/n >>>>>>>>>>>>>>>>>>>>>>>>>>"
+      );
       await db.OrderDetail.bulkCreate(data.arrDataShopCart);
+      //ADD
+      for (let i = 0; i < data.arrDataShopCart.length; i++) {
+        const findOderDetailId = await db.OrderDetail.findOne({
+          where: {
+            productId: data.arrDataShopCart[i].productId,
+            orderId: data.arrDataShopCart[i].orderId,
+          },
+          raw: true,
+          nest: true,
+        });
+
+        const warrantyDetail = await db.ProductDetailConfig.findOne({
+          where: { id: data.arrDataShopCart[i].productId },
+          raw: true,
+          nest: true,
+        });
+        let makeColor = "";
+        let makeRom = "";
+
+        if (+findOderDetailId.id % 2) {
+          makeColor = "Y/";
+          makeRom = "D";
+        } else {
+          makeColor = "N/";
+          makeRom = "P";
+        }
+
+        await db.OrderDetail.update(
+          {
+            checkWarranty:
+              makeColor +
+              moment(findOderDetailId.createAt)
+                .format("YYYY-MM-DD")
+                .toString() +
+              warrantyDetail.warrantyId.toString() +
+              findOderDetailId.id.toString() +
+              makeRom,
+          },
+          {
+            where: {
+              id: findOderDetailId.id,
+            },
+          }
+        );
+      }
       let res = await db.ShopCart.findOne({
         where: { userId: data.userId, statusId: 0 },
         raw: true,
@@ -744,12 +805,15 @@ export const paymentOrderVnpaySuccess = (data) => {
           nest: true,
         });
         for (let i = 0; i < data.arrDataShopCart.length; i++) {
-          console.log('333333333333333333333333333', data.arrDataShopCart[i].productId);
+          console.log(
+            "333333333333333333333333333",
+            data.arrDataShopCart[i].productId
+          );
           let productDetailSize = await db.ProductDetailConfig.findOne({
             where: { id: data.arrDataShopCart[i].productId },
             raw: false,
           });
-          console.log('222222222222222222222 ,', productDetailSize);
+          console.log("222222222222222222222 ,", productDetailSize);
           productDetailSize.stock =
             productDetailSize.stock - data.arrDataShopCart[i].quantity;
           await productDetailSize.save();
@@ -771,7 +835,7 @@ export const paymentOrderVnpaySuccess = (data) => {
         errMessage: "ok",
       });
     } catch (error) {
-      console.log(">>>>>>>>>>>>>>>>>>>>>>>error", error)
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>error", error);
       reject(error);
     }
   });
