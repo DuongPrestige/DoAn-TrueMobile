@@ -342,6 +342,14 @@ export const getDetailOrderById = (id) => {
             raw: true,
             nest: true,
           });
+
+          //new
+          orderDetail[i].seri = await db.OrderDetailSeri.findAll({
+            where: { orderdetailId: orderDetail[i].id },
+            raw: true,
+            nest: true,
+          });
+
           orderDetail[i].product = await db.Product.findOne({
             where: { id: orderDetail[i].productDetail.productId },
             raw: true,
