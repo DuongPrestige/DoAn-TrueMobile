@@ -97,6 +97,8 @@ router.delete(
 router.post("/create-serinumber", controllers.createNewSeriNumber);
 router.put("/update-serinumber", controllers.updateSeriNumber);
 router.delete("/delete-serinumber", controllers.deleteSeriNumber);
+router.get("/get-all-serinumber", controllers.getAllSeriNumber);
+
 // router.get(
 //   "/get-all-product-detail-by-id",
 //   controllers.getAllProductDetailById

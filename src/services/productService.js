@@ -1627,3 +1627,30 @@ export const getProductShopCart = (data) => {
     }
   });
 };
+
+export const getAllSeriNumber = (data) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.id || !data.limit || !data.offset) {
+        resolve({
+          errCode: 1,
+          errMessage: "Missing required parameter!",
+        });
+      } else {
+        let seriAll = await db.SeriNumber.findAndCountAll({
+          where: { productdetaiconfiglId: data.id },
+          limit: +data.limit,
+          offset: +data.offset,
+        });
+
+        resolve({
+          errCode: 0,
+          count: seriAll.count,
+          data: seriAll.rows,
+        });
+      }
+    } catch (error) {
+      reject(error);
+    }
+  });
+};

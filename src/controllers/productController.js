@@ -243,6 +243,16 @@ export const getDetailProductById = async (req, res) => {
   }
 };
 
+export const getAllSeriNumber = async (req, res) => {
+  try {
+    let data = await services.getAllSeriNumber(req.query);
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error in getAllSeriNumber:", error);
+    return internalServer(res);
+  }
+};
+
 //them moi
 export const getAllProductDetailImageById = async (req, res) => {
   try {
