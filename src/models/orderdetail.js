@@ -7,7 +7,12 @@ module.exports = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate(models) {}
+    static associate(models) {
+      OrderDetail.hasMany(models.OrderDetailSeri, {
+        foreignKey: "orderdetailId",
+        as: "seriOrderData",
+      });
+    }
   }
   OrderDetail.init(
     {
@@ -15,7 +20,6 @@ module.exports = (sequelize, DataTypes) => {
       productId: DataTypes.INTEGER,
       quantity: DataTypes.INTEGER,
       realPrice: DataTypes.BIGINT,
-      checkWarranty: DataTypes.STRING,
     },
     {
       sequelize,

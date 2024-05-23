@@ -53,6 +53,7 @@ export const addShopCart = (data) => {
                 quantity = quantity - orderDetail[k].quantity;
               }
             }
+
             res.stock = quantity;
           }
           if (data.type === "UPDATE_QUANTITY") {
@@ -172,6 +173,17 @@ export const getAllShopCartByUserId = (id) => {
               nest: true,
             }
           );
+
+          //new 23/5
+
+          for (let j = 0; j < res.length; j++) {
+            res[i].productdetailconfigData.seri = await db.SeriNumber.findAll({
+              where: { productdetaiconfiglId: res[i].productdetailconfigId },
+              raw: true,
+              nest: true,
+            });
+          }
+
           res[i].productDetail = await db.ProductDetail.findOne({
             where: { id: res[i].productdetailconfigData.productdetailId },
             raw: true,

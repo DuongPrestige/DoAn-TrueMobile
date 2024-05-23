@@ -19,6 +19,11 @@ module.exports = (sequelize, DataTypes) => {
         targetKey: "code",
         as: "warrantyData",
       });
+
+      ProductDetailConfig.hasMany(models.SeriNumber, {
+        foreignKey: "productdetaiconfiglId",
+        as: "seriData",
+      });
     }
   }
   ProductDetailConfig.init(
@@ -36,7 +41,6 @@ module.exports = (sequelize, DataTypes) => {
       battery: DataTypes.TEXT("long"),
       design: DataTypes.TEXT("long"),
       warrantyId: DataTypes.STRING,
-      serialNumber: DataTypes.STRING,
     },
     {
       sequelize,

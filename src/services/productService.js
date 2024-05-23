@@ -37,7 +37,6 @@ function dynamicSort(property) {
 export const createNewProduct = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
-      console.log(data);
       if (
         !data.categoryId ||
         !data.brandId ||
@@ -86,7 +85,6 @@ export const createNewProduct = (data) => {
               battery: data.battery,
               design: data.design,
               warrantyId: data.warranty,
-              serialNumber: data.serialNumber,
             });
           }
         }
@@ -153,7 +151,7 @@ export const getAllProductAdmin = (data) => {
             attributes: ["value", "code"],
           },
         ],
-        order: [['createdAt', 'DESC']],
+        order: [["createdAt", "DESC"]],
         raw: true,
         nest: true,
       };
@@ -426,7 +424,6 @@ export const createNewProductDetail = (data) => {
             battery: data.battery,
             design: data.design,
             warrantyId: data.warranty,
-            serialNumber: data.serialNumber,
           });
         }
         resolve({
@@ -530,6 +527,104 @@ export const createNewProductDetailImage = (data) => {
   });
 };
 
+//new 23/5
+export const createNewSeriNumber = (data) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.id || !data.seriNumber) {
+        resolve({
+          errCode: 1,
+          errMessage: "Missing required parameter!",
+        });
+      } else {
+        await db.SeriNumber.create({
+          productdetaiconfiglId: data.id,
+          seriNumber: data.seriNumber,
+          statusId: "SR1",
+          checkWarranty: data.checkWarranty,
+          review: data.review,
+        });
+        resolve({
+          errCode: 0,
+          errMessage: "Create new SeriNumber successfully!",
+        });
+      }
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+//new 23/5
+export const updateSeriNumber = (data) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.id) {
+        resolve({
+          errCode: 1,
+          errMessage: "Missing required parameter!",
+        });
+      } else {
+        let seri = await db.SeriNumber.findOne({
+          where: { id: data.id },
+          raw: false,
+        });
+        if (seri) {
+          seri.seriNumber = data.seriNumber;
+          seri.statusId = data.statusId;
+          seri.checkWarranty = data.checkWarranty;
+          seri.review = data.review;
+          await seri.save();
+          resolve({
+            errCode: 0,
+            errMessage: "Update seriNumber successfully!",
+          });
+        } else {
+          resolve({
+            errCode: 2,
+            errMessage: "seriNumber not found!",
+          });
+        }
+      }
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+export const deleteSeriNumber = (data) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.id) {
+        resolve({
+          errCode: 1,
+          errMessage: "Missing required parameter!",
+        });
+      } else {
+        let productImage = await db.SeriNumber.findOne({
+          where: { id: data.id },
+          raw: false,
+        });
+        if (productImage) {
+          await db.SeriNumber.destroy({
+            where: { id: data.id },
+          });
+          resolve({
+            errCode: 0,
+            errMessage: "Delete seriNumber successfully!",
+          });
+        } else {
+          resolve({
+            errCode: 2,
+            errMessage: "seriNumber not found!",
+          });
+        }
+      }
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+//new 23/5
 export const getDetailProductImageById = (id) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -772,7 +867,6 @@ export const createNewProductDetailConfig = (data) => {
           battery: data.battery,
           design: data.design,
           warrantyId: data.warrantyId,
-          serialNumber: data.serialNumber,
         });
         resolve({
           errCode: 0,
@@ -835,7 +929,6 @@ export const updateProductDetailConfig = (data) => {
           res.battery = data.battery;
           res.design = data.design;
           res.warrantyId = data.warrantyId;
-          res.serialNumber = data.serialNumber;
           await res.save();
 
           // await db.OrderDetail.update(
@@ -980,53 +1073,49 @@ export const getProductFeature = (limit) => {
     }
   });
 };
-
-function calculateMonth1(a, b) {
-  // Chuyển đổi chuỗi a sang dạng Date
-  const dateA = new Date(a);
-  console.log("a: ", a);
-
-  console.log("dateA: ", dateA);
-
-  // Thêm số tháng b vào số tháng hiện tại của a
-  dateA.setMonth(dateA.getMonth() + b);
-
-  // Định dạng lại dateA thành chuỗi yyyy-MM-dd
-  const dateC = dateA.toISOString().slice(0, 10);
-
-  // Trả về kết quả
-  return dateC;
-}
-
-function calculateMonth(a, b) {
-  // Chuyển đổi chuỗi a sang dạng Date
-  const dateA = new Date(a);
-  // Thêm số tháng b vào số tháng hiện tại của a
-  dateA.setMonth(dateA.getMonth() + b);
-
-  // Định dạng lại dateA thành chuỗi yyyy-MM-dd
-  const dateC = dateA.toISOString().slice(0, 10);
-
-  // Trả về kết quả
-  return dateC;
-}
-
+//new 23/5
 function checkWarranty(startDate) {
   const startDateObject = new Date(startDate);
+  console.log("startDate----", startDate);
+  console.log("startDateObject----", startDateObject);
   const today = new Date();
 
+  const options = {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
+
   if (today > startDateObject) {
-    return `Sản phẩm đã hết hạn bảo hành từ ngày: ${startDate}`;
+    return `Sản phẩm đã hết hạn bảo hành từ ngày: ${startDate.toLocaleDateString(
+      "vi-VN",
+      options
+    )}`;
   } else {
-    return `Còn bảo hành hành đến ngày: ${startDate}`;
+    return `Còn bảo hành hành đến ngày: ${startDateObject.toLocaleDateString(
+      "vi-VN",
+      options
+    )}`;
   }
 }
 
+function formatDateToText(dateString) {
+  const date = new Date(dateString);
+  const options = {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
+  return date.toLocaleDateString("vi-VN", options);
+}
+//new 23/5
 export const checkWarrantyAPI = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const res = await db.OrderDetail.findOne({
-        where: { checkWarranty: data.warranty },
+      const res = await db.OrderDetailSeri.findOne({
+        where: { seriNumber: data.seriNumber },
         raw: true,
         nest: true,
       });
@@ -1036,8 +1125,15 @@ export const checkWarrantyAPI = (data) => {
           errMessage: "Không tìm thấy thông tin bảo hành!",
         });
       }
+      //new 23/5
+      const checkOrderdetail = await db.OrderDetail.findOne({
+        where: { id: res.orderdetailId },
+        raw: true,
+        nest: true,
+      });
+      //new 23/5
       const checkS6 = await db.OrderProduct.findOne({
-        where: { id: res.orderId, statusId: "S6" },
+        where: { id: checkOrderdetail.orderId, statusId: "S6" },
         raw: true,
         nest: true,
       });
@@ -1048,24 +1144,38 @@ export const checkWarrantyAPI = (data) => {
           errMessage: "Không tìm thấy thông tin bảo hành!",
         });
       }
+      //new 23/5
+      //hiển thị ngày mua
+      const dateString = checkS6.updatedAt;
+      console.log("dateString 123", dateString);
 
-      const buyDate = res.checkWarranty.slice(2, 12);
-      const warrantyTime = +res.checkWarranty.slice(12, 14);
-      const c = calculateMonth(buyDate, warrantyTime);
-      const warrantyStatus = checkWarranty(c);
+      console.log("dateString formattedDate", formattedDate);
+      const originalDate = moment(dateString);
+      // Thêm 6 tháng vào ngày ban đầu
+      const sixMonthsLater = originalDate.add(6, "months");
 
-      // console.log(warrantyStatus);
+      // Lấy ngày tiếp theo của tháng được tính
+      const nextDay = sixMonthsLater.clone().add(1, "day");
 
-      //bắn ra thông tin sản phẩm
-      //tên
-      //ngày mua
+      const warrantyStatus = checkWarranty(nextDay);
 
+      // In kết quả
+      console.log(
+        "Ngày tiếp theo của 6 tháng sau là:",
+        nextDay.format("YYYY-MM-DD")
+      );
+      //new 23/5
       const getProductDetailId = await db.ProductDetailConfig.findOne({
-        where: { id: res.productId },
+        where: { id: checkOrderdetail.productId },
         include: [{ model: db.Allcode, as: "romData" }],
         raw: true,
         nest: true,
       });
+      const formattedDate = formatDateToText(dateString);
+
+      const monthOfWarranty = +getProductDetailId.warrantyId;
+
+      ///kh lien quan
       const getProductId = await db.ProductDetail.findOne({
         where: { id: getProductDetailId.productdetailId },
         raw: true,
@@ -1081,7 +1191,6 @@ export const checkWarrantyAPI = (data) => {
         getImageId.image = new Buffer(getImageId.image, "base64").toString(
           "binary"
         );
-        console.log("getImageId: ", getImageId);
 
         const getProductName = await db.Product.findOne({
           where: { id: getProductId.productId },
@@ -1099,8 +1208,8 @@ export const checkWarrantyAPI = (data) => {
         resolve({
           errCode: 0,
           nameProdudct: `Sản Phẩm: ${nameProduct}`,
-          serialNumber: `Số Sê-ri: ${data.warranty}`,
-          messBuyDate: `Ngày mua: ${buyDate}`,
+          serialNumber: `Số Sê-ri: ${data.seriNumber}`,
+          messBuyDate: `Ngày mua: ${formattedDate}`,
           messWarranty: warrantyStatus,
           image: getImageId.image,
         });
@@ -1196,7 +1305,6 @@ export const getAllProductDetailById = (data) => {
           limit: +data.limit,
           offset: +data.offset,
         });
-        console.log("productdetail:", productdetail);
 
         if (productdetail.rows && productdetail.rows.length > 0) {
           for (let i = 0; i < productdetail.rows.length; i++) {
@@ -1316,17 +1424,13 @@ export const getDetailProductById = (id) => {
           raw: true,
           nest: true,
         });
-        //check consolog đã trả về đủ 2 màu
-        //console.log("Phai co 2 mau xanh va do", res.productDetail);
-        // console.log("dem so mau", res.productDetail.length);
-        // console.log("id product detail", res.productDetail[1].id);
+
         for (let i = 0; i < res.productDetail.length > 0; i++) {
           res.productDetail[i].productImage = await db.ProductImage.findAll({
             where: { productdetailId: res.productDetail[i].id },
             raw: true,
             nest: true,
           });
-          // console.log("id product detail", res.productDetail[1].productImage);
           res.productDetail[i].productDetailConfig =
             await db.ProductDetailConfig.findAll({
               where: { productdetailId: res.productDetail[i].id },
@@ -1345,10 +1449,23 @@ export const getDetailProductById = (id) => {
                 },
               ],
             });
-          // console.log(
-          //   "productDetailConfig",
-          //   res.productDetail[1].productDetailConfig
-          // );
+          //new 23/5
+          // for (
+          //   let j = 0;
+          //   j < res.productDetail[i].productDetailConfig.length;
+          //   j++
+          // ) {
+          //   res.productDetail[i].productDetailConfig[j].seri =
+          //     await db.SeriNumber.findAll({
+          //       where: {
+          //         productdetaiconfiglId:
+          //           res.productDetail[i].productDetailConfig[j].id,
+          //       },
+          //       raw: true,
+          //       nest: true,
+          //     });
+          // }
+          //new 23/5
           for (let j = 0; j < res.productDetail[i].productImage.length; j++) {
             res.productDetail[i].productImage[j].image = new Buffer(
               res.productDetail[i].productImage[j].image,
@@ -1397,10 +1514,6 @@ export const getDetailProductById = (id) => {
             }
 
             res.productDetail[i].productDetailConfig[k].stock = quantity;
-            // console.log(
-            //   "stock:",
-            //   res.productDetail[i].productDetailConfig[k].stock
-            // );
           }
         }
         resolve({

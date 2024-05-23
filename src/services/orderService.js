@@ -4,9 +4,9 @@ import { v4 as uuidv4 } from "uuid";
 const moment = require("moment");
 var querystring = require("qs");
 var crypto = require("crypto");
-import paypal from "paypal-rest-sdk";
+import paypal, { order } from "paypal-rest-sdk";
 
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 paypal.configure({
   mode: "sandbox",
   client_id:
@@ -26,7 +26,6 @@ export const createNewOrder = (data) => {
           errMessage: "Missing required parameter !",
         });
       } else {
-        console.log("check111111111111111111111111");
         let product = await db.OrderProduct.create({
           addressUserId: data.addressUserId,
           isPaymentOnlien: data.isPaymentOnlien,
@@ -40,53 +39,133 @@ export const createNewOrder = (data) => {
           item.orderId = product.dataValues.id;
           return item;
         });
+
         //bulkCreate() to insert multiple records
-        await db.OrderDetail.bulkCreate(data.arrDataShopCart);
 
-        for (let i = 0; i < data.arrDataShopCart.length; i++) {
-          const findOderDetailId = await db.OrderDetail.findOne({
+        // vừa tạo được nhiều bảng vừa lấy được id của các bảng orderdetail mới tạo vào biến sorecords
+        //getAllIdOrderDetails là mảng
+        let getAllIdOrderDetails = await db.OrderDetail.bulkCreate(
+          data.arrDataShopCart
+        );
+
+        console.log("getAllIdOrderDetails:::::::::::", getAllIdOrderDetails);
+
+        //ta có mảng OrderDetailIdArray chứa tất cả orderdetailId vừa mới tạo
+        //theo dạng số nguyên
+        let OrderDetailIdArray = [];
+        for (let i = 0; i < getAllIdOrderDetails.length; i++) {
+          OrderDetailIdArray[i] = getAllIdOrderDetails[i].dataValues.id;
+        }
+
+        let productdetaiconfiglIdArray = [];
+        for (let i = 0; i < getAllIdOrderDetails.length; i++) {
+          productdetaiconfiglIdArray[i] =
+            getAllIdOrderDetails[i].dataValues.productId;
+        }
+
+        console.log("OrderDetailIdArray:::::::::::", OrderDetailIdArray);
+
+        //để lấy tất cả serinumber với  statusId: "SR1" theo productDetailConfigId
+        // biến getSerinumber sẽ chứa tất cả dữ liệu serinumber theo productDetailConfigId khả dụng
+        // tiếp theo lấy số lượng seri cần tạo sau khi thêm vào orderseri thì update statusId: "SR2" cho các seri đó
+        // muốn thêm vào bảng orderseri cần các trường: orderdetailId, SeriNumber, review
+
+        let getSerinumber = []; // sẽ là một mảng chứa nhiều mảng, mỗi mảng con lại chứa nhiều object
+        // mảng getSerinumber sẽ chứa tất cả object serinumber theo productDetailConfigId
+        for (let i = 0; i < OrderDetailIdArray.length; i++) {
+          getSerinumber[i] = await db.SeriNumber.findAll({
             where: {
-              productId: data.arrDataShopCart[i].productId,
-              orderId: data.arrDataShopCart[i].orderId,
+              productdetaiconfiglId: productdetaiconfiglIdArray[i],
+              // lấy 1 tất cả dữ liệu từ bảng serinumber theo productDetailConfigId
+              statusId: "SR1",
             },
+            limit: +data.arrDataShopCart[i].quantity,
+            offset: 0,
             raw: true,
             nest: true,
           });
+        }
+        console.log("data.arrDataShopCart:::::::::::", data.arrDataShopCart);
+        console.log(
+          "data.arrDataShopCart[0].quantity:::::::::::",
+          data.arrDataShopCart[0].quantity
+        );
 
-          const warrantyDetail = await db.ProductDetailConfig.findOne({
-            where: { id: data.arrDataShopCart[i].productId },
-            raw: true,
-            nest: true,
-          });
-          let makeColor = "";
-          let makeRom = "";
+        console.log("getSerinumber:::::::::::", getSerinumber);
 
-          if (+findOderDetailId.id % 2) {
-            makeColor = "Y/";
-            makeRom = "D";
-          } else {
-            makeColor = "N/";
-            makeRom = "P";
-          }
+        ///lấy số lượng serial number theo data.arrDataShopCart.quantity
+        let result = getSerinumber.flatMap((innerArray, index) =>
+          innerArray.map((item) => ({
+            seriNumber: item.seriNumber,
+            review: null,
+            orderdetailId: OrderDetailIdArray[index],
+          }))
+        );
 
-          await db.OrderDetail.update(
-            {
-              checkWarranty:
-                makeColor +
-                moment(findOderDetailId.createAt)
-                  .format("YYYY-MM-DD")
-                  .toString() +
-                warrantyDetail.warrantyId.toString() +
-                findOderDetailId.id.toString() +
-                makeRom,
-            },
+        console.log("result:::::::::::", result);
+
+        //tạo nhiều bảng trong orderdetailSeri
+        await db.OrderDetailSeri.bulkCreate(result);
+
+        //cập nhật lại seri
+        for (let i = 0; i < result.length; i++) {
+          await db.SeriNumber.update(
+            { statusId: "SR2" },
             {
               where: {
-                id: findOderDetailId.id,
+                seriNumber: result[i].seriNumber,
               },
+              raw: false,
             }
           );
         }
+
+        //23/5
+
+        // for (let i = 0; i < data.arrDataShopCart.length; i++) {
+        //   const findOderDetailId = await db.OrderDetail.findOne({
+        //     where: {
+        //       productId: data.arrDataShopCart[i].productId,
+        //       orderId: data.arrDataShopCart[i].orderId,
+        //     },
+        //     raw: true,
+        //     nest: true,
+        //   });
+
+        //   const warrantyDetail = await db.ProductDetailConfig.findOne({
+        //     where: { id: data.arrDataShopCart[i].productId },
+        //     raw: true,
+        //     nest: true,
+        //   });
+        //   let makeColor = "";
+        //   let makeRom = "";
+
+        //   if (+findOderDetailId.id % 2) {
+        //     makeColor = "Y/";
+        //     makeRom = "D";
+        //   } else {
+        //     makeColor = "N/";
+        //     makeRom = "P";
+        //   }
+
+        //   await db.OrderDetail.update(
+        //     {
+        //       checkWarranty:
+        //         makeColor +
+        //         moment(findOderDetailId.createAt)
+        //           .format("YYYY-MM-DD")
+        //           .toString() +
+        //         warrantyDetail.warrantyId.toString() +
+        //         findOderDetailId.id.toString() +
+        //         makeRom,
+        //     },
+        //     {
+        //       where: {
+        //         id: findOderDetailId.id,
+        //       },
+        //     }
+        //   );
+        // }
 
         let res = await db.ShopCart.findOne({
           where: { userId: data.userId, statusId: 0 },
@@ -325,15 +404,38 @@ export const updateStatusOrder = (data) => {
           data.dataOrder.orderDetail.length > 0
         ) {
           //check lai ham nay 13/5
+          let tongQuan = 0;
           for (let i = 0; i < data.dataOrder.orderDetail.length; i++) {
             let productDetailSize = await db.ProductDetailConfig.findOne({
               where: { id: data.dataOrder.orderDetail[i].productDetailSize.id },
               raw: false,
             });
-            console.log("productDetailSize", productDetailSize.stock);
             productDetailSize.stock =
               productDetailSize.stock + data.dataOrder.orderDetail[i].quantity;
+
+            tongQuan += data.dataOrder.orderDetail[i].quantity;
+
             await productDetailSize.save();
+          }
+
+          //cập nhật lại seri
+          for (let i = 0; i < data.dataOrder.orderDetail.length; i++) {
+            for (
+              let j = 0;
+              j < data.dataOrder.orderDetail[i].seri.length;
+              j++
+            ) {
+              await db.SeriNumber.update(
+                { statusId: "SR1" },
+                {
+                  where: {
+                    seriNumber:
+                      data.dataOrder.orderDetail[i].seri[j].seriNumber,
+                  },
+                  raw: false,
+                }
+              );
+            }
           }
         }
         resolve({
@@ -400,6 +502,12 @@ export const getAllOrdersByUser = (userId) => {
                   raw: true,
                   nest: true,
                 });
+              //new
+              orderDetail[k].seri = await db.OrderDetailSeri.findAll({
+                where: { orderdetailId: orderDetail[k].id },
+                raw: true,
+                nest: true,
+              });
 
               orderDetail[k].productDetail = await db.ProductDetail.findOne({
                 where: { id: orderDetail[k].productDetailSize.productdetailId },
@@ -742,11 +850,7 @@ export const paymentOrderVnpaySuccess = (data) => {
         item.orderId = product.dataValues.id;
         return item;
       });
-      console.log(
-        ">>>>>>>>>>>>>>>>>>>>data : /n",
-        data,
-        "/n >>>>>>>>>>>>>>>>>>>>>>>>>>"
-      );
+
       await db.OrderDetail.bulkCreate(data.arrDataShopCart);
       //ADD
       for (let i = 0; i < data.arrDataShopCart.length; i++) {
@@ -805,15 +909,10 @@ export const paymentOrderVnpaySuccess = (data) => {
           nest: true,
         });
         for (let i = 0; i < data.arrDataShopCart.length; i++) {
-          console.log(
-            "333333333333333333333333333",
-            data.arrDataShopCart[i].productId
-          );
           let productDetailSize = await db.ProductDetailConfig.findOne({
             where: { id: data.arrDataShopCart[i].productId },
             raw: false,
           });
-          console.log("222222222222222222222 ,", productDetailSize);
           productDetailSize.stock =
             productDetailSize.stock - data.arrDataShopCart[i].quantity;
           await productDetailSize.save();
@@ -835,7 +934,6 @@ export const paymentOrderVnpaySuccess = (data) => {
         errMessage: "ok",
       });
     } catch (error) {
-      console.log(">>>>>>>>>>>>>>>>>>>>>>>error", error);
       reject(error);
     }
   });

@@ -3,8 +3,6 @@ import { internalServer, badRequest } from "../middlewares/handle_error";
 
 export const createNewProduct = async (req, res) => {
   try {
-    console.log("controller data: ", data);
-
     let data = await services.createNewProduct(req.body);
     return res.status(200).json(data);
   } catch (error) {
@@ -264,6 +262,36 @@ export const checkWarranty = async (req, res) => {
     return res.status(200).json(data);
   } catch (error) {
     console.error("Error in checkWarranty:", error);
+    return internalServer(res);
+  }
+};
+
+export const createNewSeriNumber = async (req, res) => {
+  try {
+    let data = await services.createNewSeriNumber(req.body);
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error in createNewSeriNumber:", error);
+    return internalServer(res);
+  }
+};
+
+export const updateSeriNumber = async (req, res) => {
+  try {
+    let data = await services.updateSeriNumber(req.body);
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error in updateSeriNumber:", error);
+    return internalServer(res);
+  }
+};
+
+export const deleteSeriNumber = async (req, res) => {
+  try {
+    let data = await services.deleteSeriNumber(req.body);
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error in deleteSeriNumber:", error);
     return internalServer(res);
   }
 };

@@ -50,9 +50,7 @@ module.exports = {
       warrantyId: {
         type: Sequelize.STRING,
       },
-      serialNumber: {
-        type: Sequelize.STRING,
-      },
+
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
