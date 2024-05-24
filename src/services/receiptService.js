@@ -17,33 +17,32 @@ export const createNewReceipt = (data) => {
           errMessage: "Missing required parameter !",
         });
       } else {
-        
         let receipt = await db.Receipt.create({
           userId: data.userId,
           supplierId: data.supplierId,
         });
-        let dataProductDetailConfig = await db.ProductDetailConfig.findOne(
-          {
-            where: { id: data.productdetailconfigId },
-            raw: true,
-            nest: true,
-          }
-        )
+        let dataProductDetailConfig = await db.ProductDetailConfig.findOne({
+          where: { id: data.productdetailconfigId },
+          raw: true,
+          nest: true,
+        });
         if (receipt) {
-          let arrSeri = []
-          let obSeri = {}
-          let number = Math.random()
-          for(let i=0; i < data.quantity; i++){
+          let arrSeri = [];
+          let obSeri = {};
+          let number = Math.random();
+          for (let i = 0; i < data.quantity; i++) {
             obSeri = {
               productdetaiconfiglId: data.productdetailconfigId,
-              seriNumber: `B3C9-${dataProductDetailConfig.productdetailId}-${dataProductDetailConfig.id}-${number + i}`,
+              seriNumber: `B3C9-${dataProductDetailConfig.productdetailId}-${
+                dataProductDetailConfig.id
+              }-${number + i}`,
               statusId: "SR1",
               checkWarranty: null,
               review: null,
-            }
-            arrSeri.push(obSeri)
+            };
+            arrSeri.push(obSeri);
           }
-          await db.SeriNumber.bulkCreate(arrSeri)
+          await db.SeriNumber.bulkCreate(arrSeri);
           await db.ReceiptDetail.create({
             receiptId: receipt.id,
             productdetailconfigId: data.productdetailconfigId,
@@ -75,6 +74,28 @@ export const createNewReceiptDetail = (data) => {
           errMessage: "Missing required parameter !",
         });
       } else {
+        let dataProductDetailConfig = await db.ProductDetailConfig.findOne({
+          where: { id: data.productdetailconfigId },
+          raw: true,
+          nest: true,
+        });
+        let arrSeri = [];
+        let obSeri = {};
+        let number;
+        for (let i = 0; i < data.quantity; i++) {
+          number = Math.random();
+          obSeri = {
+            productdetaiconfiglId: data.productdetailconfigId,
+            seriNumber: `B3C9-${dataProductDetailConfig.productdetailId}-${
+              dataProductDetailConfig.id
+            }-${number + i}`,
+            statusId: "SR1",
+            checkWarranty: null,
+            review: null,
+          };
+          arrSeri.push(obSeri);
+        }
+        await db.SeriNumber.bulkCreate(arrSeri);
         await db.ReceiptDetail.create({
           receiptId: data.receiptId,
           productdetailconfigId: data.productdetailconfigId,

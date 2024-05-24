@@ -48,8 +48,6 @@ export const createNewOrder = (data) => {
           data.arrDataShopCart
         );
 
-        console.log("getAllIdOrderDetails:::::::::::", getAllIdOrderDetails);
-
         //ta có mảng OrderDetailIdArray chứa tất cả orderdetailId vừa mới tạo
         //theo dạng số nguyên
         let OrderDetailIdArray = [];
@@ -62,8 +60,6 @@ export const createNewOrder = (data) => {
           productdetaiconfiglIdArray[i] =
             getAllIdOrderDetails[i].dataValues.productId;
         }
-
-        console.log("OrderDetailIdArray:::::::::::", OrderDetailIdArray);
 
         //để lấy tất cả serinumber với  statusId: "SR1" theo productDetailConfigId
         // biến getSerinumber sẽ chứa tất cả dữ liệu serinumber theo productDetailConfigId khả dụng
@@ -85,13 +81,6 @@ export const createNewOrder = (data) => {
             nest: true,
           });
         }
-        console.log("data.arrDataShopCart:::::::::::", data.arrDataShopCart);
-        console.log(
-          "data.arrDataShopCart[0].quantity:::::::::::",
-          data.arrDataShopCart[0].quantity
-        );
-
-        console.log("getSerinumber:::::::::::", getSerinumber);
 
         ///lấy số lượng serial number theo data.arrDataShopCart.quantity
         let result = getSerinumber.flatMap((innerArray, index) =>
@@ -101,8 +90,6 @@ export const createNewOrder = (data) => {
             orderdetailId: OrderDetailIdArray[index],
           }))
         );
-
-        console.log("result:::::::::::", result);
 
         //tạo nhiều bảng trong orderdetailSeri
         await db.OrderDetailSeri.bulkCreate(result);
@@ -482,6 +469,7 @@ export const getAllOrdersByUser = (userId) => {
             ],
             raw: true,
             nest: true,
+            order: [["createdAt", "DESC"]],
           });
           for (let j = 0; j < addressUser[i].order.length; j++) {
             //get type voucher
@@ -753,53 +741,119 @@ export const paymentOrderSuccess = (data) => {
                 item.orderId = product.dataValues.id;
                 return item;
               });
+              console.log("paymentOrderSuccess");
 
-              await db.OrderDetail.bulkCreate(data.arrDataShopCart);
-              //ADD
-              for (let i = 0; i < data.arrDataShopCart.length; i++) {
-                const findOderDetailId = await db.OrderDetail.findOne({
+              //bulkCreate() to insert multiple records
+
+              // vừa tạo được nhiều bảng vừa lấy được id của các bảng orderdetail mới tạo vào biến sorecords
+              //getAllIdOrderDetails là mảng
+              let getAllIdOrderDetails = await db.OrderDetail.bulkCreate(
+                data.arrDataShopCart
+              );
+
+              //ta có mảng OrderDetailIdArray chứa tất cả orderdetailId vừa mới tạo
+              //theo dạng số nguyên
+              let OrderDetailIdArray = [];
+              for (let i = 0; i < getAllIdOrderDetails.length; i++) {
+                OrderDetailIdArray[i] = getAllIdOrderDetails[i].dataValues.id;
+              }
+
+              let productdetaiconfiglIdArray = [];
+              for (let i = 0; i < getAllIdOrderDetails.length; i++) {
+                productdetaiconfiglIdArray[i] =
+                  getAllIdOrderDetails[i].dataValues.productId;
+              }
+
+              //để lấy tất cả serinumber với  statusId: "SR1" theo productDetailConfigId
+              // biến getSerinumber sẽ chứa tất cả dữ liệu serinumber theo productDetailConfigId khả dụng
+              // tiếp theo lấy số lượng seri cần tạo sau khi thêm vào orderseri thì update statusId: "SR2" cho các seri đó
+              // muốn thêm vào bảng orderseri cần các trường: orderdetailId, SeriNumber, review
+
+              let getSerinumber = []; // sẽ là một mảng chứa nhiều mảng, mỗi mảng con lại chứa nhiều object
+              // mảng getSerinumber sẽ chứa tất cả object serinumber theo productDetailConfigId
+              for (let i = 0; i < OrderDetailIdArray.length; i++) {
+                getSerinumber[i] = await db.SeriNumber.findAll({
                   where: {
-                    productId: data.arrDataShopCart[i].productId,
-                    orderId: data.arrDataShopCart[i].orderId,
+                    productdetaiconfiglId: productdetaiconfiglIdArray[i],
+                    // lấy 1 tất cả dữ liệu từ bảng serinumber theo productDetailConfigId
+                    statusId: "SR1",
                   },
+                  limit: +data.arrDataShopCart[i].quantity,
+                  offset: 0,
                   raw: true,
                   nest: true,
                 });
+              }
 
-                const warrantyDetail = await db.ProductDetailConfig.findOne({
-                  where: { id: data.arrDataShopCart[i].productId },
-                  raw: true,
-                  nest: true,
-                });
-                let makeColor = "";
-                let makeRom = "";
+              ///lấy số lượng serial number theo data.arrDataShopCart.quantity
+              let result = getSerinumber.flatMap((innerArray, index) =>
+                innerArray.map((item) => ({
+                  seriNumber: item.seriNumber,
+                  review: null,
+                  orderdetailId: OrderDetailIdArray[index],
+                }))
+              );
 
-                if (+findOderDetailId.id % 2) {
-                  makeColor = "Y/";
-                  makeRom = "D";
-                } else {
-                  makeColor = "N/";
-                  makeRom = "P";
-                }
+              //tạo nhiều bảng trong orderdetailSeri
+              await db.OrderDetailSeri.bulkCreate(result);
 
-                await db.OrderDetail.update(
-                  {
-                    checkWarranty:
-                      makeColor +
-                      moment(findOderDetailId.createAt)
-                        .format("YYYY-MM-DD")
-                        .toString() +
-                      warrantyDetail.warrantyId.toString() +
-                      findOderDetailId.id.toString() +
-                      makeRom,
-                  },
+              //cập nhật lại seri
+              for (let i = 0; i < result.length; i++) {
+                await db.SeriNumber.update(
+                  { statusId: "SR2" },
                   {
                     where: {
-                      id: findOderDetailId.id,
+                      seriNumber: result[i].seriNumber,
                     },
+                    raw: false,
                   }
                 );
               }
+              //ADD
+              // for (let i = 0; i < data.arrDataShopCart.length; i++) {
+              //   const findOderDetailId = await db.OrderDetail.findOne({
+              //     where: {
+              //       productId: data.arrDataShopCart[i].productId,
+              //       orderId: data.arrDataShopCart[i].orderId,
+              //     },
+              //     raw: true,
+              //     nest: true,
+              //   });
+
+              //   const warrantyDetail = await db.ProductDetailConfig.findOne({
+              //     where: { id: data.arrDataShopCart[i].productId },
+              //     raw: true,
+              //     nest: true,
+              //   });
+              //   let makeColor = "";
+              //   let makeRom = "";
+
+              //   if (+findOderDetailId.id % 2) {
+              //     makeColor = "Y/";
+              //     makeRom = "D";
+              //   } else {
+              //     makeColor = "N/";
+              //     makeRom = "P";
+              //   }
+
+              //   await db.OrderDetail.update(
+              //     {
+              //       checkWarranty:
+              //         makeColor +
+              //         moment(findOderDetailId.createAt)
+              //           .format("YYYY-MM-DD")
+              //           .toString() +
+              //         warrantyDetail.warrantyId.toString() +
+              //         findOderDetailId.id.toString() +
+              //         makeRom,
+              //     },
+              //     {
+              //       where: {
+              //         id: findOderDetailId.id,
+              //       },
+              //     }
+              //   );
+              // }
 
               let res = await db.ShopCart.findOne({
                 where: { userId: data.userId, statusId: 0 },
@@ -858,53 +912,118 @@ export const paymentOrderVnpaySuccess = (data) => {
         item.orderId = product.dataValues.id;
         return item;
       });
+      console.log("paymentOrderVnpaySuccess");
+      //bulkCreate() to insert multiple records
 
-      await db.OrderDetail.bulkCreate(data.arrDataShopCart);
-      //ADD
-      for (let i = 0; i < data.arrDataShopCart.length; i++) {
-        const findOderDetailId = await db.OrderDetail.findOne({
+      // vừa tạo được nhiều bảng vừa lấy được id của các bảng orderdetail mới tạo vào biến sorecords
+      //getAllIdOrderDetails là mảng
+      let getAllIdOrderDetails = await db.OrderDetail.bulkCreate(
+        data.arrDataShopCart
+      );
+
+      //ta có mảng OrderDetailIdArray chứa tất cả orderdetailId vừa mới tạo
+      //theo dạng số nguyên
+      let OrderDetailIdArray = [];
+      for (let i = 0; i < getAllIdOrderDetails.length; i++) {
+        OrderDetailIdArray[i] = getAllIdOrderDetails[i].dataValues.id;
+      }
+
+      let productdetaiconfiglIdArray = [];
+      for (let i = 0; i < getAllIdOrderDetails.length; i++) {
+        productdetaiconfiglIdArray[i] =
+          getAllIdOrderDetails[i].dataValues.productId;
+      }
+
+      //để lấy tất cả serinumber với  statusId: "SR1" theo productDetailConfigId
+      // biến getSerinumber sẽ chứa tất cả dữ liệu serinumber theo productDetailConfigId khả dụng
+      // tiếp theo lấy số lượng seri cần tạo sau khi thêm vào orderseri thì update statusId: "SR2" cho các seri đó
+      // muốn thêm vào bảng orderseri cần các trường: orderdetailId, SeriNumber, review
+
+      let getSerinumber = []; // sẽ là một mảng chứa nhiều mảng, mỗi mảng con lại chứa nhiều object
+      // mảng getSerinumber sẽ chứa tất cả object serinumber theo productDetailConfigId
+      for (let i = 0; i < OrderDetailIdArray.length; i++) {
+        getSerinumber[i] = await db.SeriNumber.findAll({
           where: {
-            productId: data.arrDataShopCart[i].productId,
-            orderId: data.arrDataShopCart[i].orderId,
+            productdetaiconfiglId: productdetaiconfiglIdArray[i],
+            // lấy 1 tất cả dữ liệu từ bảng serinumber theo productDetailConfigId
+            statusId: "SR1",
           },
+          limit: +data.arrDataShopCart[i].quantity,
+          offset: 0,
           raw: true,
           nest: true,
         });
+      }
 
-        const warrantyDetail = await db.ProductDetailConfig.findOne({
-          where: { id: data.arrDataShopCart[i].productId },
-          raw: true,
-          nest: true,
-        });
-        let makeColor = "";
-        let makeRom = "";
+      ///lấy số lượng serial number theo data.arrDataShopCart.quantity
+      let result = getSerinumber.flatMap((innerArray, index) =>
+        innerArray.map((item) => ({
+          seriNumber: item.seriNumber,
+          review: null,
+          orderdetailId: OrderDetailIdArray[index],
+        }))
+      );
 
-        if (+findOderDetailId.id % 2) {
-          makeColor = "Y/";
-          makeRom = "D";
-        } else {
-          makeColor = "N/";
-          makeRom = "P";
-        }
+      //tạo nhiều bảng trong orderdetailSeri
+      await db.OrderDetailSeri.bulkCreate(result);
 
-        await db.OrderDetail.update(
-          {
-            checkWarranty:
-              makeColor +
-              moment(findOderDetailId.createAt)
-                .format("YYYY-MM-DD")
-                .toString() +
-              warrantyDetail.warrantyId.toString() +
-              findOderDetailId.id.toString() +
-              makeRom,
-          },
+      //cập nhật lại seri
+      for (let i = 0; i < result.length; i++) {
+        await db.SeriNumber.update(
+          { statusId: "SR2" },
           {
             where: {
-              id: findOderDetailId.id,
+              seriNumber: result[i].seriNumber,
             },
+            raw: false,
           }
         );
       }
+      //ADD
+      // for (let i = 0; i < data.arrDataShopCart.length; i++) {
+      //   const findOderDetailId = await db.OrderDetail.findOne({
+      //     where: {
+      //       productId: data.arrDataShopCart[i].productId,
+      //       orderId: data.arrDataShopCart[i].orderId,
+      //     },
+      //     raw: true,
+      //     nest: true,
+      //   });
+
+      //   const warrantyDetail = await db.ProductDetailConfig.findOne({
+      //     where: { id: data.arrDataShopCart[i].productId },
+      //     raw: true,
+      //     nest: true,
+      //   });
+      //   let makeColor = "";
+      //   let makeRom = "";
+
+      //   if (+findOderDetailId.id % 2) {
+      //     makeColor = "Y/";
+      //     makeRom = "D";
+      //   } else {
+      //     makeColor = "N/";
+      //     makeRom = "P";
+      //   }
+
+      //   await db.OrderDetail.update(
+      //     {
+      //       checkWarranty:
+      //         makeColor +
+      //         moment(findOderDetailId.createAt)
+      //           .format("YYYY-MM-DD")
+      //           .toString() +
+      //         warrantyDetail.warrantyId.toString() +
+      //         findOderDetailId.id.toString() +
+      //         makeRom,
+      //     },
+      //     {
+      //       where: {
+      //         id: findOderDetailId.id,
+      //       },
+      //     }
+      //   );
+      // }
       let res = await db.ShopCart.findOne({
         where: { userId: data.userId, statusId: 0 },
         raw: true,
