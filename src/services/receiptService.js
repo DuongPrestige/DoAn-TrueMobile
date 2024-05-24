@@ -1,6 +1,6 @@
 import db from "../models";
 require("dotenv").config();
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 
 export const createNewReceipt = (data) => {
   return new Promise(async (resolve, reject) => {
@@ -17,11 +17,33 @@ export const createNewReceipt = (data) => {
           errMessage: "Missing required parameter !",
         });
       } else {
+        
         let receipt = await db.Receipt.create({
           userId: data.userId,
           supplierId: data.supplierId,
         });
+        let dataProductDetailConfig = await db.ProductDetailConfig.findOne(
+          {
+            where: { id: data.productdetailconfigId },
+            raw: true,
+            nest: true,
+          }
+        )
         if (receipt) {
+          let arrSeri = []
+          let obSeri = {}
+          let number = Math.random()
+          for(let i=0; i < data.quantity; i++){
+            obSeri = {
+              productdetaiconfiglId: data.productdetailconfigId,
+              seriNumber: `B3C9-${dataProductDetailConfig.productdetailId}-${dataProductDetailConfig.id}-${number + i}`,
+              statusId: "SR1",
+              checkWarranty: null,
+              review: null,
+            }
+            arrSeri.push(obSeri)
+          }
+          await db.SeriNumber.bulkCreate(arrSeri)
           await db.ReceiptDetail.create({
             receiptId: receipt.id,
             productdetailconfigId: data.productdetailconfigId,
@@ -117,8 +139,6 @@ export const getDetailReceiptById = (id) => {
             });
           }
         }
-        console.log("acs", res);
-
         resolve({
           errCode: 0,
           data: res,
@@ -145,7 +165,6 @@ export const getAllReceipt = (data) => {
 
       //  if(data.keyword !=='') objectFilter.where = {...objectFilter.where, name: {[Op.substring]: data.keyword  } }
       let res = await db.Receipt.findAndCountAll(objectFilter);
-      console.log("ress1:", res);
       //   let resall = await db.Receipt.findAll();
       //   console.log("resall:", resall);
 
