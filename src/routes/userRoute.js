@@ -1,7 +1,7 @@
 import * as controllers from "../controllers";
 import { verifyToken } from "../middlewares/verify_token";
 import express from "express";
-import { isAdmin, isSaler } from "../middlewares/verify_role";
+import { isAdmin, isSaler, isSalerOrAdmin } from "../middlewares/verify_role";
 
 const router = express.Router();
 
@@ -22,9 +22,12 @@ router.get("/get-current-user", controllers.getCurrentUser);
 router.put("/update-user", controllers.handleUpdateUser);
 router.post("/change-password", controllers.handleChangePassword);
 
-router.use(isAdmin);
-router.delete("/delete-user", controllers.handleDeleteUser);
+router.use(isSalerOrAdmin);
 router.get("/get-all-user", controllers.getAllUsers);
+
+router.use(isAdmin);
+
+router.delete("/delete-user", controllers.handleDeleteUser);
 
 //other way
 // router.get('/getcurrentuser',[verifyToken, isAdmin], controllers.getCurrentUser)

@@ -1,7 +1,7 @@
 import * as controllers from "../controllers";
 import { verifyToken } from "../middlewares/verify_token";
 import express from "express";
-import { isAdmin, isSaler } from "../middlewares/verify_role";
+import { isAdmin, isSaler, isSalerOrAdmin } from "../middlewares/verify_role";
 
 const router = express.Router();
 
@@ -12,7 +12,7 @@ const router = express.Router();
 //PRIVATE ROUTES
 router.use(verifyToken);
 
-router.use(isAdmin);
+router.use(isSalerOrAdmin);
 
 router.get("/get-count-card-statistic", controllers.getCountCardStatistic);
 router.get("/get-count-status-order", controllers.getCountStatusOrder);

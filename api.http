@@ -13,7 +13,7 @@ POST  http://localhost:8006/api/v1/user/login
 Content-Type: application/json
 
 {
-    "email": "example@example.com",
+    "email": "admin@gmail.com",
     "password": "123456"
 }
 
@@ -22,7 +22,7 @@ POST  http://localhost:8006/api/v1/user/login
 Content-Type: application/json
 
 {
-    "email": "baocao1@gmail.com",
+    "email": "saler@gmail.com",
     "password": "123456"
 }
 
