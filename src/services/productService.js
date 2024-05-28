@@ -1088,7 +1088,7 @@ function checkWarranty(startDate) {
   };
 
   if (today > startDateObject) {
-    return `Sản phẩm đã hết hạn bảo hành từ ngày: ${startDate.toLocaleDateString(
+    return `Sản phẩm đã hết hạn bảo hành từ ngày: ${startDateObject.toLocaleDateString(
       "vi-VN",
       options
     )}`;
@@ -1145,25 +1145,7 @@ export const checkWarrantyAPI = (data) => {
         });
       }
       //new 23/5
-      //hiển thị ngày mua
-      const dateString = checkS6.updatedAt;
-      console.log("dateString 123", dateString);
 
-      console.log("dateString formattedDate", formattedDate);
-      const originalDate = moment(dateString);
-      // Thêm 6 tháng vào ngày ban đầu
-      const sixMonthsLater = originalDate.add(6, "months");
-
-      // Lấy ngày tiếp theo của tháng được tính
-      const nextDay = sixMonthsLater.clone().add(1, "day");
-
-      const warrantyStatus = checkWarranty(nextDay);
-
-      // In kết quả
-      console.log(
-        "Ngày tiếp theo của 6 tháng sau là:",
-        nextDay.format("YYYY-MM-DD")
-      );
       //new 23/5
       const getProductDetailId = await db.ProductDetailConfig.findOne({
         where: { id: checkOrderdetail.productId },
@@ -1171,9 +1153,21 @@ export const checkWarrantyAPI = (data) => {
         raw: true,
         nest: true,
       });
-      const formattedDate = formatDateToText(dateString);
 
       const monthOfWarranty = +getProductDetailId.warrantyId;
+
+      //hiển thị ngày mua
+      const dateString = checkS6.updatedAt;
+      const formattedDate = formatDateToText(dateString);
+
+      const originalDate = moment(dateString);
+      // Thêm 6 tháng vào ngày ban đầu
+      const sixMonthsLater = originalDate.add(monthOfWarranty, "months");
+
+      // Lấy ngày tiếp theo của tháng được tính
+      const nextDay = sixMonthsLater.clone().add(1, "day");
+
+      const warrantyStatus = checkWarranty(nextDay);
 
       ///kh lien quan
       const getProductId = await db.ProductDetail.findOne({
