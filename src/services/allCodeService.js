@@ -1,3 +1,4 @@
+import { raw } from "mysql2";
 import db from "../models";
 const { Op } = require("sequelize");
 
@@ -190,8 +191,7 @@ export const getListAllCodeService = (data) => {
     try {
       let objectFilter = {
         where: { type: data.type },
-        order: [['createdAt', 'DESC']],
-
+        order: [["createdAt", "DESC"]],
       };
       if (data.limit && data.offset) {
         objectFilter.limit = +data.limit;
@@ -249,10 +249,14 @@ export const getAllCategoryBlog = (type) => {
       } else {
         let allcode = await db.Allcode.findAll({
           where: { type: type },
+          raw: true,
+          nest: true,
         });
         for (let i = 0; i < allcode.length; i++) {
           let blog = await db.Blog.findAll({
             where: { subjectId: allcode[i].code },
+            raw: true,
+            nest: true,
           });
           if (blog) allcode[i].countPost = blog.length;
         }
