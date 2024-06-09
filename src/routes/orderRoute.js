@@ -28,6 +28,7 @@ router.post(
   "/payment-order-vnpay-success",
   controllers.paymentOrderVnpaySuccess
 );
+
 router.post("/payment-order-vnpay", controllers.paymentOrderVnpay);
 
 router.use(isAdmin);

@@ -896,6 +896,8 @@ export const paymentOrderSuccess = (data) => {
     }
   });
 };
+
+//nếu thanh toán thành công thì ghi vào cơ sở dữ liệu
 export const paymentOrderVnpaySuccess = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -912,17 +914,9 @@ export const paymentOrderVnpaySuccess = (data) => {
         item.orderId = product.dataValues.id;
         return item;
       });
-      console.log("paymentOrderVnpaySuccess");
-      //bulkCreate() to insert multiple records
-
-      // vừa tạo được nhiều bảng vừa lấy được id của các bảng orderdetail mới tạo vào biến sorecords
-      //getAllIdOrderDetails là mảng
       let getAllIdOrderDetails = await db.OrderDetail.bulkCreate(
         data.arrDataShopCart
       );
-
-      //ta có mảng OrderDetailIdArray chứa tất cả orderdetailId vừa mới tạo
-      //theo dạng số nguyên
       let OrderDetailIdArray = [];
       for (let i = 0; i < getAllIdOrderDetails.length; i++) {
         OrderDetailIdArray[i] = getAllIdOrderDetails[i].dataValues.id;
@@ -934,18 +928,11 @@ export const paymentOrderVnpaySuccess = (data) => {
           getAllIdOrderDetails[i].dataValues.productId;
       }
 
-      //để lấy tất cả serinumber với  statusId: "SR1" theo productDetailConfigId
-      // biến getSerinumber sẽ chứa tất cả dữ liệu serinumber theo productDetailConfigId khả dụng
-      // tiếp theo lấy số lượng seri cần tạo sau khi thêm vào orderseri thì update statusId: "SR2" cho các seri đó
-      // muốn thêm vào bảng orderseri cần các trường: orderdetailId, SeriNumber, review
-
-      let getSerinumber = []; // sẽ là một mảng chứa nhiều mảng, mỗi mảng con lại chứa nhiều object
-      // mảng getSerinumber sẽ chứa tất cả object serinumber theo productDetailConfigId
+      let getSerinumber = [];
       for (let i = 0; i < OrderDetailIdArray.length; i++) {
         getSerinumber[i] = await db.SeriNumber.findAll({
           where: {
             productdetaiconfiglId: productdetaiconfiglIdArray[i],
-            // lấy 1 tất cả dữ liệu từ bảng serinumber theo productDetailConfigId
             statusId: "SR1",
           },
           limit: +data.arrDataShopCart[i].quantity,
@@ -954,8 +941,6 @@ export const paymentOrderVnpaySuccess = (data) => {
           nest: true,
         });
       }
-
-      ///lấy số lượng serial number theo data.arrDataShopCart.quantity
       let result = getSerinumber.flatMap((innerArray, index) =>
         innerArray.map((item) => ({
           seriNumber: item.seriNumber,
@@ -963,11 +948,7 @@ export const paymentOrderVnpaySuccess = (data) => {
           orderdetailId: OrderDetailIdArray[index],
         }))
       );
-
-      //tạo nhiều bảng trong orderdetailSeri
       await db.OrderDetailSeri.bulkCreate(result);
-
-      //cập nhật lại seri
       for (let i = 0; i < result.length; i++) {
         await db.SeriNumber.update(
           { statusId: "SR2" },
@@ -979,51 +960,6 @@ export const paymentOrderVnpaySuccess = (data) => {
           }
         );
       }
-      //ADD
-      // for (let i = 0; i < data.arrDataShopCart.length; i++) {
-      //   const findOderDetailId = await db.OrderDetail.findOne({
-      //     where: {
-      //       productId: data.arrDataShopCart[i].productId,
-      //       orderId: data.arrDataShopCart[i].orderId,
-      //     },
-      //     raw: true,
-      //     nest: true,
-      //   });
-
-      //   const warrantyDetail = await db.ProductDetailConfig.findOne({
-      //     where: { id: data.arrDataShopCart[i].productId },
-      //     raw: true,
-      //     nest: true,
-      //   });
-      //   let makeColor = "";
-      //   let makeRom = "";
-
-      //   if (+findOderDetailId.id % 2) {
-      //     makeColor = "Y/";
-      //     makeRom = "D";
-      //   } else {
-      //     makeColor = "N/";
-      //     makeRom = "P";
-      //   }
-
-      //   await db.OrderDetail.update(
-      //     {
-      //       checkWarranty:
-      //         makeColor +
-      //         moment(findOderDetailId.createAt)
-      //           .format("YYYY-MM-DD")
-      //           .toString() +
-      //         warrantyDetail.warrantyId.toString() +
-      //         findOderDetailId.id.toString() +
-      //         makeRom,
-      //     },
-      //     {
-      //       where: {
-      //         id: findOderDetailId.id,
-      //       },
-      //     }
-      //   );
-      // }
       let res = await db.ShopCart.findOne({
         where: { userId: data.userId, statusId: 0 },
         raw: true,
@@ -1093,6 +1029,7 @@ export const confirmOrder = (data) => {
     }
   });
 };
+//code 1
 export const paymentOrderVnpay = (req) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -1101,20 +1038,18 @@ export const paymentOrderVnpay = (req) => {
         req.connection.remoteAddress ||
         req.socket.remoteAddress ||
         req.connection.socket.remoteAddress;
-
       var tmnCode = process.env.VNP_TMNCODE;
       var secretKey = process.env.VNP_HASHSECRET;
       var vnpUrl = process.env.VNP_URL;
       var returnUrl = process.env.VNP_RETURNURL;
-
+      //tham số truyền vào
       var createDate = process.env.DATE_VNPAYMENT;
       var orderId = uuidv4();
-
       var amount = req.body.amount;
       var bankCode = req.body.bankCode;
-
       var orderInfo = req.body.orderDescription;
       var orderType = req.body.orderType;
+      //
       var locale = req.body.language;
       if (locale === null || locale === "") {
         locale = "vn";
@@ -1124,7 +1059,6 @@ export const paymentOrderVnpay = (req) => {
       vnp_Params["vnp_Version"] = "2.1.0";
       vnp_Params["vnp_Command"] = "pay";
       vnp_Params["vnp_TmnCode"] = tmnCode;
-      // vnp_Params['vnp_Merchant'] = ''
       vnp_Params["vnp_Locale"] = locale;
       vnp_Params["vnp_CurrCode"] = currCode;
       vnp_Params["vnp_TxnRef"] = orderId;
@@ -1137,15 +1071,11 @@ export const paymentOrderVnpay = (req) => {
       if (bankCode !== null && bankCode !== "") {
         vnp_Params["vnp_BankCode"] = bankCode;
       }
-
       vnp_Params = sortObject(vnp_Params);
-
       var signData = querystring.stringify(vnp_Params, { encode: false });
-
       var hmac = crypto.createHmac("sha512", secretKey);
       var signed = hmac.update(new Buffer(signData, "utf-8")).digest("hex");
       vnp_Params["vnp_SecureHash"] = signed;
-
       vnpUrl += "?" + querystring.stringify(vnp_Params, { encode: false });
 
       resolve({
@@ -1157,26 +1087,21 @@ export const paymentOrderVnpay = (req) => {
     }
   });
 };
+
+//code Code IPN URL
 export const confirmOrderVnpay = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
       var vnp_Params = data;
-
       var secureHash = vnp_Params["vnp_SecureHash"];
-
       delete vnp_Params["vnp_SecureHash"];
       delete vnp_Params["vnp_SecureHashType"];
-
       vnp_Params = sortObject(vnp_Params);
-
       var tmnCode = process.env.VNP_TMNCODE;
       var secretKey = process.env.VNP_HASHSECRET;
-
       var signData = querystring.stringify(vnp_Params, { encode: false });
-
       var hmac = crypto.createHmac("sha512", secretKey);
       var signed = hmac.update(new Buffer(signData, "utf-8")).digest("hex");
-
       if (secureHash === signed) {
         resolve({
           errCode: 0,

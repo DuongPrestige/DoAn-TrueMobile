@@ -2,10 +2,10 @@ import cors from "cors";
 import express from "express";
 import bodyParser from "body-parser";
 require("dotenv").config();
-process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 import initRoute from "./src/routes";
-import {sendMessage} from './src/services/messageService'
-import http from 'http'
+import { sendMessage } from "./src/services/messageService";
+import http from "http";
 
 require("./src/config/connection_db");
 
@@ -30,32 +30,29 @@ app.use(
 
 initRoute(app);
 
-
 const server = http.createServer(app);
-
 const socketIo = require("socket.io")(server, {
-    cors: {
-        origin: "*",
-    }
-  }); 
-socketIo.on("connection", (socket) => { 
-    console.log("New client connected >>>>>>>>>>>>>>>>>>>>" + socket.id); 
-  
-    socket.on("sendDataClient", function(data) { 
-      sendMessage(data)
-      socketIo.emit("sendDataServer", { data });
-    })
-    socket.on("loadRoomClient", function(data) { 
-    
-      socketIo.emit("loadRoomServer", { data });
-    })
-    socket.on("disconnect", () => {
-      console.log("Client disconnected"); 
-    });
+  cors: {
+    origin: "*",
+  },
+});
+socketIo.on("connection", (socket) => {
+  console.log("New client connected >>>>>>>>>>>>>>>>>>>>" + socket.id);
+
+  socket.on("sendDataClient", function (data) {
+    sendMessage(data);
+    socketIo.emit("sendDataServer", { data });
   });
+  socket.on("loadRoomClient", function (data) {
+    socketIo.emit("loadRoomServer", { data });
+  });
+  socket.on("disconnect", () => {
+    console.log("Client disconnected");
+  });
+});
+
 let port = process.env.PORT || 2007;
 
 server.listen(port, () => {
-  console.log("Backend Nodejs is running on the port : " + port)
+  console.log("Backend Nodejs is running on the port : " + port);
 });
-
