@@ -1076,8 +1076,6 @@ export const getProductFeature = (limit) => {
 //new 23/5
 function checkWarranty(startDate) {
   const startDateObject = new Date(startDate);
-  console.log("startDate----", startDate);
-  console.log("startDateObject----", startDateObject);
   const today = new Date();
 
   const options = {

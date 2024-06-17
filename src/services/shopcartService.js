@@ -56,6 +56,7 @@ export const addShopCart = (data) => {
 
             res.stock = quantity;
           }
+          //dùng redux
           if (data.type === "UPDATE_QUANTITY") {
             if (+data.quantity > res.stock) {
               resolve({

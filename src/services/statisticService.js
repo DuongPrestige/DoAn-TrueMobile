@@ -13,6 +13,7 @@ function compareDates(d1, d2) {
   if (d1 <= d2) return true;
   if (d1 >= d2) return false;
 }
+//thống kê tổng quan
 export const getCountCardStatistic = () => {
   return new Promise(async (resolve, reject) => {
     try {
